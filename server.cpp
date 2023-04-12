@@ -317,8 +317,13 @@ private:
         // Check if file is already subscribed by the client
         for (auto subscription : subscriptions[pathName]) {
             if (subscription.second == ipAddress + ":" + std::to_string(port)) {
-                std::cerr << "Error: File already subscribed" << std::endl;
-                std::map<std::string, std::string> reply = prepErrorReply("File already subscribed");
+                // Send message to client
+                const char* message = "You are already subscribed!"; // Simulate updated data
+                
+                AttributeMap reply;
+                reply["response"] = message;
+                reply["responseCode"] = "200";
+                std::cout << "Sent to client: " << message << std::endl;
                 return reply;
             }
         }
