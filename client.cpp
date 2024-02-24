@@ -10,14 +10,16 @@
 int main() {
     
     // Create a socket
-    Socket serverSocket(AF_INET, SOCK_STREAM, 0);
+    Socket clientSocket(AF_INET, SOCK_STREAM, 0);
 
-    // Connect to the server
+    // Create server address
     sockaddr_in serverAddr;
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_port = htons(8080); // Server port
     inet_pton(AF_INET, "127.0.0.1", &serverAddr.sin_addr); // Server IP address (localhost)
-    serverSocket.connect((sockaddr*)&serverAddr, sizeof(serverAddr));
+
+    // Connect to the server
+    clientSocket.connect((sockaddr*)&serverAddr, sizeof(serverAddr));
     
     // Create buffer
     char buffer[1024];
@@ -31,15 +33,15 @@ int main() {
         const char* msg = &message[0];
 
         // Send data to server
-        serverSocket.send(msg, strlen(msg), 0);
+        clientSocket.send(msg, strlen(msg), 0);
 
         // Receive data from server
-        int bytesReceived = serverSocket.recv(buffer, sizeof(buffer), 0);
+        int bytesReceived = clientSocket.recv(buffer, sizeof(buffer), 0);
         std::cout << "Received from server: " << buffer << std::endl;
     }
     
     // Close socket
-    close(serverSocket);
+    close(clientSocket);
 
     return 0;
 }

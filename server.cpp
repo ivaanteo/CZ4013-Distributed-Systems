@@ -10,14 +10,21 @@ int main(int argc, char* argv[]) {
     // Create a socket
     Socket serverSocket(AF_INET, SOCK_STREAM, 0);
     
+    // Get port number from argv
+    std::cout << argv[1] << std::endl;
+    int port = argv[1] ? atoi(argv[1]) : 8080;
+
+
     // Bind the socket to an IP address and port
     sockaddr_in serverAddr;
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_addr.s_addr = INADDR_ANY; // Accept connections on any IP address
-    serverAddr.sin_port = htons(8080); // Use port 8080
+    serverAddr.sin_port = htons(port); // Server port
     serverSocket.bind((sockaddr*)&serverAddr, sizeof(serverAddr));
 
-
+    // Print
+    std::cout << "Server listening on port " << port << std::endl;
+    
     // Listen for incoming connections
     serverSocket.listen(10);
 
