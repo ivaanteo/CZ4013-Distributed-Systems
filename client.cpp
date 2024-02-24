@@ -23,9 +23,15 @@ int main() {
     
     // Create buffer
     char buffer[1024];
-    memset(buffer, 0, sizeof(buffer));
     
     while (true) {
+        // Reset buffer
+        memset(buffer, 0, sizeof(buffer));
+
+        // Receive data from server -- Receive intro message first
+        int bytesReceived = clientSocket.recv(buffer, sizeof(buffer), 0);
+        std::cout << "Received from server: " << buffer << std::endl;
+
         // Get user input
         std::string message;
         std::cout << "Enter a message: \n";
@@ -34,10 +40,6 @@ int main() {
 
         // Send data to server
         clientSocket.send(msg, strlen(msg), 0);
-
-        // Receive data from server
-        int bytesReceived = clientSocket.recv(buffer, sizeof(buffer), 0);
-        std::cout << "Received from server: " << buffer << std::endl;
     }
     
     // Close socket

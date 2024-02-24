@@ -47,6 +47,7 @@ int main(int argc, char* argv[]) {
     // Receive data from client and echo it back
     char buffer[1024];
     while (true) {
+        // Reset buffer
         memset(buffer, 0, sizeof(buffer));
         
         int bytesReceived = clientSocket.recv(buffer, sizeof(buffer), 0);
@@ -60,6 +61,7 @@ int main(int argc, char* argv[]) {
             std::cout << "Client disconnected\n";
             break;
         }
+        
         std::cout << "Received from client: " << buffer << std::endl;
         
         // Send
