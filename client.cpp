@@ -7,7 +7,6 @@
 #include "./socket.cpp"
 #include <string>
 
-
 class Client {
 public:
     Client() {
@@ -42,7 +41,7 @@ public:
             getUserInput("Enter a message: ", msg);
             handleUserInput(&msg[0]);
 
-            // Send data to server
+            // Send data to server -- to be removed and put everything in handleUserInput
             clientSocket->send(&msg[0], strlen(&msg[0]), 0);
         }
     }
@@ -71,16 +70,16 @@ private:
         std::string duration;
         getUserInput("Enter the duration you would like to subscribe for (in seconds): ", duration);
 
-        std::cout << "Subscribing to " << fileName << "...\n";
-
-        // Send subscribe message to server
-        clientSocket->send(&fileName[0], strlen(&fileName[0]), 0);
+        std::string timestamp = std::to_string(time(0) + std::stoi(duration));
+        
+        // // Send subscribe message to server
+        std::string request = "subscribe " + fileName + " " + timestamp;
+        clientSocket->send(&request[0], strlen(&request[0]), 0);
 
         // Receive response on whether subscription was successful
         clientSocket->recv(buffer, sizeof(buffer), 0);
 
         // If successful, wait for updates
-
 
         // Unsubscribe after duration
         
@@ -102,6 +101,8 @@ private:
             handleSubscribe();
             return;
         }
+
+        // TODO: Add more features here
 
         std::cout << "Invalid command. Type 'help' for a list of commands\n";   
     }

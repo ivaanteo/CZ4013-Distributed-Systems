@@ -16,9 +16,11 @@ public:
         serverAddr.sin_addr.s_addr = INADDR_ANY; // Accept connections on any IP address
         serverAddr.sin_port = htons(port); // Server port
         serverSocket->bind((sockaddr*)&serverAddr, sizeof(serverAddr));
-        
+
         // Listen for incoming connections
         serverSocket->listen(10);
+
+        std::cout << "Server listening on port " << port << std::endl;
         
         // Accept a client connection
         clientAddrSize = sizeof(clientAddr);
@@ -46,10 +48,21 @@ public:
                 const char* message = "You are now subscribed!"; // Simulate updated data
                 clientSocket->send(message, strlen(message), 0);
                 continue;
-            } 
+            }
             
             // Send
             clientSocket->send(buffer, bytesReceived, 0);
+
+            // If client sends "exit", close the connection
+            if (strcmp(buffer, "exit") == 0) {
+                break;
+            }
+
+            // if client disconnects, kill server
+            if (bytesReceived == 0) {
+                std::cout << "Client disconnected" << std::endl;
+                break;
+            }
         }
     }
     
@@ -65,6 +78,34 @@ private:
     sockaddr_in clientAddr;
     socklen_t clientAddrSize;
     int clientSocketDescriptor;
+    char buffer[1024];
+
+    // Server helper functions
+    // Handle request
+
+    void handleRequest() {
+        // Receive data from client
+        int bytesReceived = clientSocket->recv(buffer, sizeof(buffer), 0);
+        std::cout << "Received from client: " << buffer << std::endl;
+
+        // Here, respond to each command
+
+        // If input is "subscribe", wait 10 seconds then send a message
+        if (strcmp(buffer, "subscribe") == 0) {
+            handleSubscribe();
+            return;
+        } 
+
+        // Send data to client
+        clientSocket->send(buffer, bytesReceived, 0);
+    }
+
+    void handleSubscribe() {
+        // Simulate waiting for data
+        sleep(10);
+        const char* message = "You are now subscribed!"; // Simulate updated data
+        clientSocket->send(message, strlen(message), 0);
+    }
 };
 
 
