@@ -26,6 +26,8 @@ public:
         clientAddrSize = sizeof(clientAddr);
         clientSocketDescriptor = serverSocket->accept((sockaddr*)&clientAddr, &clientAddrSize);
         clientSocket = new Socket(clientSocketDescriptor);
+
+        std::cout << "Clients connected" << std::endl;
     }
     
     void run() {
@@ -34,29 +36,12 @@ public:
         clientSocket->send(introMessage, strlen(introMessage), 0);
         
         // Receive data from client and echo it back
-        char buffer[1024];
         while (true) {
             // Reset buffer
             memset(buffer, 0, sizeof(buffer));
             
-            int bytesReceived = clientSocket->recv(buffer, sizeof(buffer), 0);
-            std::cout << "Received from client: " << buffer << std::endl;
-            
-            // If input is "subscribe", wait 10 seconds then send a message
-            if (strcmp(buffer, "subscribe") == 0) {
-                sleep(10); // Simulate waiting for data
-                const char* message = "You are now subscribed!"; // Simulate updated data
-                clientSocket->send(message, strlen(message), 0);
-                continue;
-            }
-            
-            // Send
-            clientSocket->send(buffer, bytesReceived, 0);
-
-            // If client sends "exit", close the connection
-            if (strcmp(buffer, "exit") == 0) {
-                break;
-            }
+            int bytesReceived = receiveRequest();
+            handleRequest(bytesReceived);
 
             // if client disconnects, kill server
             if (bytesReceived == 0) {
@@ -79,32 +64,81 @@ private:
     socklen_t clientAddrSize;
     int clientSocketDescriptor;
     char buffer[1024];
+    // Subscriptions -- Filename : [Pair(timestamp, IP Address:Port), ...]
+    std::unordered_map<std::string, std::vector<std::pair<int, std::string> > > subscriptions;
 
     // Server helper functions
     // Handle request
 
-    void handleRequest() {
+    int receiveRequest() {
         // Receive data from client
         int bytesReceived = clientSocket->recv(buffer, sizeof(buffer), 0);
         std::cout << "Received from client: " << buffer << std::endl;
+        return bytesReceived;
+    }
 
+    void handleRequest(int bytesReceived) {
         // Here, respond to each command
 
         // If input is "subscribe", wait 10 seconds then send a message
-        if (strcmp(buffer, "subscribe") == 0) {
-            handleSubscribe();
+        // Retrieve first token
+        char* token = strtok(buffer, " ");
+        if (strcmp(token, "subscribe") == 0) {
+            handleSubscribe(token);
             return;
-        } 
+        }
 
         // Send data to client
         clientSocket->send(buffer, bytesReceived, 0);
     }
 
-    void handleSubscribe() {
+    void handleSubscribe(char* token) {
         // Simulate waiting for data
-        sleep(10);
+        std::cout << "Subscribing..." << std::endl;
+
+        // Print buffer
+        std::cout << "Buffer: " << buffer << std::endl;
+        // Split the message into tokens
+        token = strtok(NULL, " ");
+        std::string fileName = token;
+        std::cout << "File: " << fileName << std::endl;
+        token = strtok(NULL, " ");
+        std::string timestamp = token;
+        std::cout << "Timestamp: " << timestamp << std::endl;
+        token = strtok(NULL, " ");
+        std::string ipAddress = token;
+        std::cout << "IP Address: " << ipAddress << std::endl;
+        token = strtok(NULL, " ");
+        std::string port = token;
+        std::cout << "Port: " << port << std::endl;
+
+        // Check validity of timestamp
+        if (std::stoi(timestamp) < time(0)) {
+            std::cerr << "Error: Invalid timestamp" << std::endl;
+            return;
+        }
+
+        // Check validaity of file name
+        if (fileName != "file1" && fileName != "file2") {
+            std::cerr << "Error: Invalid file name" << std::endl;
+            return;
+        }
+
+        // // Check if file is already subscribed by the client
+        // for (auto subscription : subscriptions[fileName]) {
+        //     if (subscription.second == ipAddress + ":" + port) {
+        //         std::cerr << "Error: File already subscribed" << std::endl;
+        //         return;
+        //     }
+        // }
+
+        // Save the subscription
+        // subscriptions[fileName].push_back(std::make_pair(std::stoi(timestamp), ipAddress + ":" + port));
+
+        // Send message to client
         const char* message = "You are now subscribed!"; // Simulate updated data
         clientSocket->send(message, strlen(message), 0);
+        std::cout << "Sent to client: " << message << std::endl;
     }
 };
 

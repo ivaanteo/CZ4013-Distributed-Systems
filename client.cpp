@@ -41,8 +41,6 @@ public:
             getUserInput("Enter a message: ", msg);
             handleUserInput(&msg[0]);
 
-            // Send data to server -- to be removed and put everything in handleUserInput
-            clientSocket->send(&msg[0], strlen(&msg[0]), 0);
         }
     }
 
@@ -71,15 +69,22 @@ private:
         getUserInput("Enter the duration you would like to subscribe for (in seconds): ", duration);
 
         std::string timestamp = std::to_string(time(0) + std::stoi(duration));
-        
+
+        std::string ipAddress = clientSocket->getIP();
+        std::string port = std::to_string(clientSocket->getPort());
+
         // // Send subscribe message to server
-        std::string request = "subscribe " + fileName + " " + timestamp;
+        std::string request = "subscribe " + fileName + " " + timestamp + " " + ipAddress + " " + port;
+
         clientSocket->send(&request[0], strlen(&request[0]), 0);
 
-        // Receive response on whether subscription was successful
-        clientSocket->recv(buffer, sizeof(buffer), 0);
+        // // Receive response on whether subscription was successful
+        // clientSocket->recv(buffer, sizeof(buffer), 0);
+
+        // memset(buffer, 0, sizeof(buffer)); // Temporarily clear buffer
 
         // If successful, wait for updates
+
 
         // Unsubscribe after duration
         
@@ -102,8 +107,10 @@ private:
             return;
         }
 
+        // Echo input
+        std::string msg = std::string(input) + "\n";
+        clientSocket->send(&msg[0], strlen(&msg[0]), 0);
         // TODO: Add more features here
-
         std::cout << "Invalid command. Type 'help' for a list of commands\n";   
     }
     

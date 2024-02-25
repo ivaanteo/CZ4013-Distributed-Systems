@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <cstring>
 #include <vector>
+#include <arpa/inet.h>
+
 
 // Wrapper class for a socket
 class Socket {
@@ -30,6 +32,11 @@ public:
 
     int get() const {
         return m_socket;
+    }
+
+    // Get connections
+    std::vector<int> getConnections() {
+        return connections;
     }
 
     void bind(const sockaddr* address, socklen_t addressSize) {
@@ -89,6 +96,24 @@ public:
             exit(1);
         }
         return bytesReceived;
+    }
+
+    // Get IP address
+    std::string getIP() {
+        sockaddr_in address;
+        socklen_t addressSize = sizeof(address);
+        getsockname(m_socket, (sockaddr*)&address, &addressSize);
+        char ip[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &address.sin_addr, ip, INET_ADDRSTRLEN);
+        return ip;
+    }
+
+    // Get port
+    int getPort() {
+        sockaddr_in address;
+        socklen_t addressSize = sizeof(address);
+        getsockname(m_socket, (sockaddr*)&address, &addressSize);
+        return ntohs(address.sin_port);
     }
     
 private:
