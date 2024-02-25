@@ -7,43 +7,116 @@
 #include "./socket.cpp"
 #include <string>
 
-int main() {
-    
-    // Create a socket
-    Socket clientSocket(AF_INET, SOCK_STREAM, 0);
 
-    // Create server address
+class Client {
+public:
+    Client() {
+        // Create a socket
+        clientSocket = new Socket(AF_INET, SOCK_STREAM, 0);
+
+        // Create server address
+        serverAddr.sin_family = AF_INET;
+        serverAddr.sin_port = htons(8080); // Server port
+        inet_pton(AF_INET, "127.0.0.1", &serverAddr.sin_addr); // Server IP address (localhost)
+    }
+
+    void connect() {
+        // Connect to the server
+        clientSocket->connect((sockaddr*)&serverAddr, sizeof(serverAddr));
+    }
+
+    void run() {
+        // Create buffer
+        char buffer[1024];
+        
+        while (true) {
+            // Reset buffer
+            memset(buffer, 0, sizeof(buffer));
+
+            // Receive data from server -- Receive intro message first
+            int bytesReceived = clientSocket->recv(buffer, sizeof(buffer), 0);
+            std::cout << "Received from server: " << buffer << std::endl;
+
+            // Get user input
+            std::string msg;
+            getUserInput("Enter a message: ", msg);
+            handleUserInput(&msg[0]);
+
+            // Send data to server
+            clientSocket->send(&msg[0], strlen(&msg[0]), 0);
+        }
+    }
+
+    ~Client() {
+        delete clientSocket;
+    }
+
+private:
+    Socket* clientSocket;
     sockaddr_in serverAddr;
-    serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = htons(8080); // Server port
-    inet_pton(AF_INET, "127.0.0.1", &serverAddr.sin_addr); // Server IP address (localhost)
+    char* buffer[1024];
 
-    // Connect to the server
-    clientSocket.connect((sockaddr*)&serverAddr, sizeof(serverAddr));
-    
-    // Create buffer
-    char buffer[1024];
-    
-    while (true) {
-        // Reset buffer
-        memset(buffer, 0, sizeof(buffer));
+    // Client helper functions
 
-        // Receive data from server -- Receive intro message first
-        int bytesReceived = clientSocket.recv(buffer, sizeof(buffer), 0);
-        std::cout << "Received from server: " << buffer << std::endl;
+    void getUserInput(std::string message, std::string& input) {
+        std::cout << message << std::endl;
+        std::getline(std::cin, input);
+    }
 
-        // Get user input
-        std::string message;
-        std::cout << "Enter a message: \n";
-        std::getline(std::cin, message);
-        const char* msg = &message[0];
+    void handleSubscribe() {
 
-        // Send data to server
-        clientSocket.send(msg, strlen(msg), 0);
+        std::string fileName;
+        getUserInput("Enter the file you would like to subscribe to: ", fileName);
+
+        std::string duration;
+        getUserInput("Enter the duration you would like to subscribe for (in seconds): ", duration);
+
+        std::cout << "Subscribing to " << fileName << "...\n";
+
+        // Send subscribe message to server
+        clientSocket->send(&fileName[0], strlen(&fileName[0]), 0);
+
+        // Receive response on whether subscription was successful
+        clientSocket->recv(buffer, sizeof(buffer), 0);
+
+        // If successful, wait for updates
+
+
+        // Unsubscribe after duration
+        
+    }
+
+    void handleUserInput(char* input) {
+        if (strcmp(input, "exit") == 0){
+            std::cout << "Exiting...\n";
+            exit(0);
+        }
+        if (strcmp(input, "help") == 0){
+            std::cout << "Commands: \n";
+            std::cout << "exit - Exit the program\n";
+            std::cout << "help - Display this message\n";
+            std::cout << "subscribe - Subscribe to updates for a file\n";
+            return;
+        }
+        if (strcmp(input, "subscribe") == 0){
+            handleSubscribe();
+            return;
+        }
+
+        std::cout << "Invalid command. Type 'help' for a list of commands\n";   
     }
     
-    // Close socket
-    close(clientSocket);
+};
+
+int main() {
+    
+    Client client;
+
+    client.connect();
+
+    client.run();
 
     return 0;
 }
+
+
