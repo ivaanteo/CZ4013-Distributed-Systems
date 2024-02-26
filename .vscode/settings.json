@@ -77,6 +77,10 @@
         "format": "cpp",
         "stop_token": "cpp",
         "cinttypes": "cpp",
-        "deque": "cpp"
+        "deque": "cpp",
+        "__bits": "cpp",
+        "__nullptr": "cpp",
+        "__string": "cpp",
+        "__tuple": "cpp"
     }
 }

@@ -54,46 +54,20 @@ public:
             exit(1);
         }
     }
-
-    int accept(sockaddr* address, socklen_t* addressSize) {
-        int connectingSocket = ::accept(m_socket, address, addressSize);
-        if (connectingSocket == -1) {
-            std::cerr << "Error: Could not accept client connection\n";
-            close(m_socket);
-            exit(1);
-        }
-        // Add to list of connections
-        connections.push_back(connectingSocket);
-        return connectingSocket;
-    }
-
-    void connect(const sockaddr* address, socklen_t addressSize) {
-        int connectingSocket = ::connect(m_socket, address, addressSize);
-        if (connectingSocket == -1) {
-            std::cerr << "Error: Could not connect to server\n";
-            close(m_socket);
-            exit(1);
-        }
-        // Add to list of connections
-        connections.push_back(connectingSocket);
-    }
-
-    ssize_t send(const void* buffer, size_t length, int flags) {
-        ssize_t bytesSent = ::send(m_socket, buffer, length, flags);
+    ssize_t send(const void* buffer, size_t length, int flags, const sockaddr* destAddr, socklen_t destAddrLen) {
+        ssize_t bytesSent = sendto(m_socket, buffer, length, flags, destAddr, destAddrLen);
         if (bytesSent == -1) {
-            std::cerr << "Error: Could not send data\n";
-            close(m_socket);
-            exit(1);
+            perror("Error: Could not send data\n");
+            throw std::runtime_error("Send error");
         }
         return bytesSent;
     }
 
-    ssize_t recv(void* buffer, size_t length, int flags) {
-        ssize_t bytesReceived = ::recv(m_socket, buffer, length, flags);
+    ssize_t recv(void* buffer, size_t length, int flags, sockaddr* srcAddr, socklen_t* srcAddrLen) {
+        ssize_t bytesReceived = recvfrom(m_socket, buffer, length, flags, srcAddr, srcAddrLen);
         if (bytesReceived == -1) {
-            std::cerr << "Error: Could not receive data\n";
-            close(m_socket);
-            exit(1);
+            perror("Error: Could not receive data\n");
+            throw std::runtime_error("Receive error");
         }
         return bytesReceived;
     }

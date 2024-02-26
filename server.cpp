@@ -9,7 +9,7 @@ class Server {
 public:
     Server(int port) {
         // Create a socket
-        serverSocket = new Socket(AF_INET, SOCK_STREAM, 0);
+        serverSocket = new Socket(AF_INET, SOCK_DGRAM, 0);
         
         // Bind the socket to an IP address and port
         serverAddr.sin_family = AF_INET;
@@ -17,43 +17,31 @@ public:
         serverAddr.sin_port = htons(port); // Server port
         serverSocket->bind((sockaddr*)&serverAddr, sizeof(serverAddr));
 
-        // Listen for incoming connections
-        serverSocket->listen(10);
-
         std::cout << "Server listening on port " << port << std::endl;
-        
-        // Accept a client connection
-        clientAddrSize = sizeof(clientAddr);
-        clientSocketDescriptor = serverSocket->accept((sockaddr*)&clientAddr, &clientAddrSize);
-        clientSocket = new Socket(clientSocketDescriptor);
-
-        std::cout << "Clients connected" << std::endl;
     }
     
     void run() {
-        // Send intro message
-        const char* introMessage = "Welcome to the server!";
-        clientSocket->send(introMessage, strlen(introMessage), 0);
-        
         // Receive data from client and echo it back
         while (true) {
             // Reset buffer
             memset(buffer, 0, sizeof(buffer));
-            
-            int bytesReceived = receiveRequest();
-            handleRequest(bytesReceived);
 
-            // if client disconnects, kill server
-            if (bytesReceived == 0) {
-                std::cout << "Client disconnected" << std::endl;
-                break;
-            }
+            // Receive data from client
+            ssize_t bytesReceived = serverSocket->recv(buffer, sizeof(buffer), 0, (sockaddr*)&clientAddr, &clientAddrSize);
+            std::cout << "Received from client: " << buffer << std::endl;
+            clientAddr.sin_port = htons(8082);
+
+            // echo to the same client
+            ssize_t bytesSent = serverSocket->send(buffer, bytesReceived, 0, (sockaddr*)&clientAddr,  sizeof(clientAddr));
+
+            // Handle request
+            // handleRequest(bytesReceived);
+            // receiveRequest();
         }
     }
-    
+
     ~Server() {
         delete serverSocket;
-        delete clientSocket;
     }
 
 private:
@@ -65,14 +53,18 @@ private:
     int clientSocketDescriptor;
     char buffer[1024];
     // Subscriptions -- Filename : [Pair(timestamp, IP Address:Port), ...]
-    std::unordered_map<std::string, std::vector<std::pair<int, std::string> > > subscriptions;
+    // std::unordered_map<std::string, std::vector<std::pair<int, std::string>>> subscriptions;
 
     // Server helper functions
     // Handle request
 
     int receiveRequest() {
         // Receive data from client
-        int bytesReceived = clientSocket->recv(buffer, sizeof(buffer), 0);
+        ssize_t bytesReceived = serverSocket->recv(buffer, sizeof(buffer), 0, (sockaddr*)&clientAddr, &clientAddrSize);
+        if (bytesReceived == -1) {
+            perror("Error: Could not receive data from client\n");
+            return -1;
+        }
         std::cout << "Received from client: " << buffer << std::endl;
         return bytesReceived;
     }
@@ -89,7 +81,7 @@ private:
         }
 
         // Send data to client
-        clientSocket->send(buffer, bytesReceived, 0);
+        serverSocket->send(buffer, bytesReceived, 0, (sockaddr*)&clientAddr, clientAddrSize);
     }
 
     void handleSubscribe(char* token) {
@@ -137,7 +129,7 @@ private:
 
         // Send message to client
         const char* message = "You are now subscribed!"; // Simulate updated data
-        clientSocket->send(message, strlen(message), 0);
+        serverSocket->send(message, strlen(message), 0, (sockaddr*)&clientAddr, clientAddrSize);
         std::cout << "Sent to client: " << message << std::endl;
     }
 };

@@ -11,36 +11,29 @@ class Client {
 public:
     Client() {
         // Create a socket
-        clientSocket = new Socket(AF_INET, SOCK_STREAM, 0);
+        clientSocket = new Socket(AF_INET, SOCK_DGRAM, 0);
 
         // Create server address
         serverAddr.sin_family = AF_INET;
-        serverAddr.sin_port = htons(8080); // Server port
-        inet_pton(AF_INET, "127.0.0.1", &serverAddr.sin_addr); // Server IP address (localhost)
-    }
+        serverAddr.sin_addr.s_addr = INADDR_ANY; // Accept connections on any IP address
+        serverAddr.sin_port = htons(8081); // Server port
 
-    void connect() {
-        // Connect to the server
-        clientSocket->connect((sockaddr*)&serverAddr, sizeof(serverAddr));
+        // Set client address and port
+        clientAddr.sin_family = AF_INET;
+        clientAddr.sin_addr.s_addr = INADDR_ANY; // Allow OS to assign the client IP
+        clientAddr.sin_port = htons(8082); // Set client port
+
+        clientSocket->bind((sockaddr*)&clientAddr, sizeof(clientAddr));
+        std::cout << "Client bound to port "<< std::endl;
     }
 
     void run() {
-        // Create buffer
-        char buffer[1024];
         
         while (true) {
-            // Reset buffer
-            memset(buffer, 0, sizeof(buffer));
-
-            // Receive data from server -- Receive intro message first
-            int bytesReceived = clientSocket->recv(buffer, sizeof(buffer), 0);
-            std::cout << "Received from server: " << buffer << std::endl;
-
             // Get user input
             std::string msg;
             getUserInput("Enter a message: ", msg);
             handleUserInput(&msg[0]);
-
         }
     }
 
@@ -50,8 +43,11 @@ public:
 
 private:
     Socket* clientSocket;
+    sockaddr_in clientAddr;
     sockaddr_in serverAddr;
-    char* buffer[1024];
+    socklen_t serverAddrSize;
+    
+    char buffer[1024];
 
     // Client helper functions
 
@@ -75,8 +71,8 @@ private:
 
         // // Send subscribe message to server
         std::string request = "subscribe " + fileName + " " + timestamp + " " + ipAddress + " " + port;
+        sendRequest(request);
 
-        clientSocket->send(&request[0], strlen(&request[0]), 0);
 
         // // Receive response on whether subscription was successful
         // clientSocket->recv(buffer, sizeof(buffer), 0);
@@ -88,6 +84,12 @@ private:
 
         // Unsubscribe after duration
         
+    }
+
+    void sendRequest(const std::string& message) {
+        clientSocket->send(message.c_str(), message.length(), 0, (sockaddr*)&serverAddr, sizeof(serverAddr));
+        ssize_t bytesReceived = clientSocket->recv(buffer, sizeof(buffer), 0, (sockaddr*)&serverAddr, &serverAddrSize);
+        std::cout << "Received from client: " << buffer << std::endl;
     }
 
     void handleUserInput(char* input) {
@@ -107,9 +109,10 @@ private:
             return;
         }
 
+
         // Echo input
         std::string msg = std::string(input) + "\n";
-        clientSocket->send(&msg[0], strlen(&msg[0]), 0);
+        sendRequest(msg);
         // TODO: Add more features here
         std::cout << "Invalid command. Type 'help' for a list of commands\n";   
     }
@@ -119,8 +122,6 @@ private:
 int main() {
     
     Client client;
-
-    client.connect();
 
     client.run();
 
