@@ -99,7 +99,21 @@ private:
 
     void receiveResponse() {
         ssize_t bytesReceived = clientSocket->recv(buffer, sizeof(buffer), 0, (sockaddr*)&serverAddr, &serverAddrSize);
-        std::cout << "Received from server: " << buffer << std::endl;
+        if (bytesReceived == -1) {
+            perror("Error: Could not receive data from server\n");
+            return;
+        }
+        // Unmarshal response
+        Message response;
+        response.unmarshal(std::vector<uint8_t>(buffer, buffer + bytesReceived));
+
+        std::cout << "Received from server: " << std::endl;
+        std::cout << "Received MessageType: " << response.messageType << std::endl;
+        std::cout << "Received RequestId: " << response.requestId << std::endl;
+        std::cout << "Received BodyAttributes:" << std::endl;
+        for (const auto& pair : response.bodyAttributes.attributes) {
+            std::cout << pair.first << ": " << pair.second << std::endl;
+        }
     }
 
     void handleUserInput(char* input) {

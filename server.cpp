@@ -44,9 +44,6 @@ public:
     }
 
     void sendReply(std::map<std::string, std::string> body) { // TODO: track reply ID
-        for (const auto& pair : body) {
-                std::cout << pair.first << ": " << pair.second << std::endl;
-            }
         Message reply;
         reply.setVariables(1, 1, body);
         std::vector<uint8_t> marshalledData = reply.marshal();
@@ -74,28 +71,29 @@ public:
         fileManager.editFile("Dir1/Dir2/File1.txt", 3, "b");
         fileManager.readFile("Dir1/Dir2/File1.txt", 0, 4);
         fileManager.deleteFile("Dir1/Dir2/File2.txt");
-        // fileManager.viewDirectory();
+        fileManager.viewDirectory();
         // fileManager.createDirectory("Dir3");
+        // fileManager.viewDirectory();
+        // fileManager.deleteDirectory("Dir2/Dir3");
         // fileManager.viewDirectory();
     }
     
     void run() {
-        // Receive data from client and echo it back
-        initFileManager();
+        // initFileManager();
 
         while (true) {
             // Reset buffer
             memset(buffer, 0, sizeof(buffer));
             testMarshalling();
 
-            // Receive data from client
-            ssize_t bytesReceived = serverSocket->recv(buffer, sizeof(buffer), 0, (sockaddr*)&clientAddr, &clientAddrSize);
+            // // Receive data from client
+            // ssize_t bytesReceived = serverSocket->recv(buffer, sizeof(buffer), 0, (sockaddr*)&clientAddr, &clientAddrSize);
 
-            std::cout << "Received from client: " << buffer << std::endl;
-            clientAddr.sin_port = htons(8082); // set client port
+            // std::cout << "Received from client: " << buffer << std::endl;
+            // clientAddr.sin_port = htons(8082); // set client port
 
-            // echo to the same client
-            ssize_t bytesSent = serverSocket->send(buffer, bytesReceived, 0, (sockaddr*)&clientAddr,  sizeof(clientAddr));
+            // // echo to the same client
+            // ssize_t bytesSent = serverSocket->send(buffer, bytesReceived, 0, (sockaddr*)&clientAddr,  sizeof(clientAddr));
 
             // Handle request
             // handleRequest(bytesReceived);

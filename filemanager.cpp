@@ -24,23 +24,23 @@ public:
     }
 
     void printDirectoryContents(const std::string& directoryPath, int depth = 0) {
-    for (const auto& entry : fs::directory_iterator(directoryPath)) {
-        std::stringstream ss;
-        for (int i = 0; i < depth; ++i) {
-            ss << "  "; // Adjust the indentation level according to the depth
+        for (const auto& entry : fs::directory_iterator(directoryPath)) {
+            std::stringstream ss;
+            for (int i = 0; i < depth; ++i) {
+                ss << "  "; // Adjust the indentation level according to the depth
+            }
+            ss << entry.path().filename().string();
+            
+            if (fs::is_directory(entry)) {
+                std::cout << ss.str() << " [Directory]" << std::endl;
+                printDirectoryContents(entry.path().string(), depth + 1); // Recursive call for nested directories
+            } else if (fs::is_regular_file(entry)) {
+                std::cout << ss.str() << " [File]" << std::endl;
+            } else if (fs::is_symlink(entry)) {
+                std::cout << ss.str() << " [Symbolic Link]" << std::endl;
+            }
         }
-        ss << entry.path().filename().string();
-        
-        if (fs::is_directory(entry)) {
-            std::cout << ss.str() << " [Directory]" << std::endl;
-            printDirectoryContents(entry.path().string(), depth + 1); // Recursive call for nested directories
-        } else if (fs::is_regular_file(entry)) {
-            std::cout << ss.str() << " [File]" << std::endl;
-        } else if (fs::is_symlink(entry)) {
-            std::cout << ss.str() << " [Symbolic Link]" << std::endl;
-        }
-    }
-} 
+    } 
 
     void createDirectory(const std::string& pathName) {
         std::string newPath = serverPath + "/" + pathName;
@@ -78,6 +78,17 @@ public:
         std::cout << "ServerDirectory cleared." << std::endl;
     }
 
+    void deleteDirectory(const std::string& pathName) {
+        std::string newPath = serverPath + "/" + pathName;
+        if (!fs::exists(newPath)) {
+            std::cerr << "Error: Directory doesn't exist." << std::endl;
+            return;
+        }
+
+        fs::remove_all(newPath);
+        std::cout << "Directory " << pathName << " deleted." << std::endl;
+    }
+    
     void createFile(const std::string& pathName) {
         std::string newPath = serverPath + "/" + pathName;
         std::ofstream file(newPath);
