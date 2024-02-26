@@ -6,7 +6,7 @@
 #include <arpa/inet.h>
 #include "./socket.cpp"
 #include <string>
-
+#include "./utils.cpp"
 class Client {
 public:
     Client() {
@@ -71,7 +71,9 @@ private:
 
         // // Send subscribe message to server
         std::string request = "subscribe " + fileName + " " + timestamp + " " + ipAddress + " " + port;
-        sendRequest(request);
+        std::map<std::string, std::string> requestBody;
+        requestBody["msg"] = request;
+        sendRequest(requestBody);
 
 
         // // Receive response on whether subscription was successful
@@ -86,10 +88,18 @@ private:
         
     }
 
-    void sendRequest(const std::string& message) {
-        clientSocket->send(message.c_str(), message.length(), 0, (sockaddr*)&serverAddr, sizeof(serverAddr));
+    void sendRequest(std::map<std::string, std::string> body) { // TODO: track increasing request/ reply ID
+        Message request;
+        request.setVariables(0, 1, body);
+        std::vector<uint8_t> marshalledData = request.marshal();
+        clientSocket->send(marshalledData.data(), marshalledData.size(), 0, (sockaddr*)&serverAddr, sizeof(serverAddr));
+
+        receiveResponse();
+    }
+
+    void receiveResponse() {
         ssize_t bytesReceived = clientSocket->recv(buffer, sizeof(buffer), 0, (sockaddr*)&serverAddr, &serverAddrSize);
-        std::cout << "Received from client: " << buffer << std::endl;
+        std::cout << "Received from server: " << buffer << std::endl;
     }
 
     void handleUserInput(char* input) {
@@ -120,7 +130,9 @@ private:
 
         // Echo input
         std::string msg = std::string(input) + "\n";
-        sendRequest(msg);
+        std::map<std::string, std::string> requestBody;
+        requestBody["msg"] = msg;
+        sendRequest(requestBody);
         // TODO: Add more features here
         std::cout << "Invalid command. Type 'help' for a list of commands\n";   
     }

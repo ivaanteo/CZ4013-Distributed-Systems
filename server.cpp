@@ -5,6 +5,7 @@
 #include <cstring>
 #include "./socket.cpp"
 #include "./filemanager.cpp"
+#include "./utils.cpp"
 
 class Server {
 public:
@@ -19,7 +20,39 @@ public:
         serverSocket->bind((sockaddr*)&serverAddr, sizeof(serverAddr));
 
         std::cout << "Server listening on port " << port << std::endl;
-        initFileManager();
+    }
+
+    void testMarshalling() {
+        ssize_t bytesReceived = serverSocket->recv(buffer, sizeof(buffer), 0, (sockaddr*)&clientAddr, &clientAddrSize);
+        
+        // Unmarshal request
+        std::vector<uint8_t> receivedData(buffer, buffer + bytesReceived);
+
+        // Create a Message object and unmarshal the received data
+        Message receivedRequest;
+        receivedRequest.unmarshal(receivedData);
+
+        // Accessing fields of unmarshalled request
+        std::cout << "Received MessageType: " << receivedRequest.messageType << std::endl;
+        std::cout << "Received RequestId: " << receivedRequest.requestId << std::endl;
+        std::cout << "Received BodyAttributes:" << std::endl;
+        for (const auto& pair : receivedRequest.bodyAttributes.attributes) {
+            std::cout << pair.first << ": " << pair.second << std::endl;
+        }
+
+        sendReply(receivedRequest.bodyAttributes.attributes);
+    }
+
+    void sendReply(std::map<std::string, std::string> body) { // TODO: track reply ID
+        for (const auto& pair : body) {
+                std::cout << pair.first << ": " << pair.second << std::endl;
+            }
+        Message reply;
+        reply.setVariables(1, 1, body);
+        std::vector<uint8_t> marshalledData = reply.marshal();
+        std::cout << "Sending reply..." << std::endl;
+        clientAddr.sin_port = htons(8082); // set client port
+        serverSocket->send(marshalledData.data(), marshalledData.size(), 0, (sockaddr*)&clientAddr, sizeof(clientAddr));
     }
 
     void initFileManager() {
@@ -28,21 +61,36 @@ public:
 
         FileManager fileManager(directoryPath);
         std::cout << "File Manager created" << std::endl;
-        // fileManager.clearDirectory();
+        fileManager.clearDirectory();
         fileManager.viewDirectory();
-        // fileManager.createDirectory("Dir1/Dir2/Dir3");
+        fileManager.createDirectory("Dir1/Dir2/Dir3");
+        fileManager.viewDirectory();
+        fileManager.createFile("Dir1/Dir2/File1.txt");
+        fileManager.viewDirectory();
+        fileManager.editFile("Dir1/Dir2/File1.txt", 0, "acd");
+        fileManager.readFile("Dir1/Dir2/File1.txt", 0, 2);
+        fileManager.duplicateFile("Dir1/Dir2/File1.txt", "Dir1/Dir2/Dir3/File1.txt");
+        fileManager.viewDirectory();
+        fileManager.editFile("Dir1/Dir2/File1.txt", 3, "b");
+        fileManager.readFile("Dir1/Dir2/File1.txt", 0, 4);
+        fileManager.deleteFile("Dir1/Dir2/File2.txt");
+        // fileManager.viewDirectory();
         // fileManager.createDirectory("Dir3");
         // fileManager.viewDirectory();
     }
     
     void run() {
         // Receive data from client and echo it back
+        initFileManager();
+
         while (true) {
             // Reset buffer
             memset(buffer, 0, sizeof(buffer));
+            testMarshalling();
 
             // Receive data from client
             ssize_t bytesReceived = serverSocket->recv(buffer, sizeof(buffer), 0, (sockaddr*)&clientAddr, &clientAddrSize);
+
             std::cout << "Received from client: " << buffer << std::endl;
             clientAddr.sin_port = htons(8082); // set client port
 
@@ -52,6 +100,8 @@ public:
             // Handle request
             // handleRequest(bytesReceived);
             // receiveRequest();
+
+
         }
     }
 

@@ -83,6 +83,8 @@
         "__string": "cpp",
         "__tuple": "cpp",
         "fstream": "cpp",
-        "filesystem": "cpp"
+        "filesystem": "cpp",
+        "__tree": "cpp",
+        "map": "cpp"
     }
 }
