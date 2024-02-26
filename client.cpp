@@ -98,10 +98,18 @@ private:
             exit(0);
         }
         if (strcmp(input, "help") == 0){
-            std::cout << "Commands: \n";
-            std::cout << "exit - Exit the program\n";
-            std::cout << "help - Display this message\n";
-            std::cout << "subscribe - Subscribe to updates for a file\n";
+            std::cout << "Commands:\n"
+                    << "view - View structure of main directory and files\n"
+                    << "createdir <pathname> - Create a new directory\n"
+                    << "deletedir <pathname> - Delete a directory\n"
+                    << "create <pathname> - Create empty file\n"
+                    << "read <pathname> <offset (in bytes)> <number of bytes> - Read content from the file from offset\n"
+                    << "insert <pathname> <offset (in bytes)> <content> - Insert content at a specific position in the file\n"
+                    << "delete <pathname> - Delete content from the file\n"
+                    << "duplicate <pathname> <new pathname> - Duplicate the file with a new filename\n"
+                    << "help - Display this message\n"
+                    << "exit - Exit the program\n"
+                    << "subscribe - Subscribe to updates for a file\n";
             return;
         }
         if (strcmp(input, "subscribe") == 0){

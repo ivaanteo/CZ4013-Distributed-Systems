@@ -29,7 +29,7 @@ public:
             // Receive data from client
             ssize_t bytesReceived = serverSocket->recv(buffer, sizeof(buffer), 0, (sockaddr*)&clientAddr, &clientAddrSize);
             std::cout << "Received from client: " << buffer << std::endl;
-            clientAddr.sin_port = htons(8082);
+            clientAddr.sin_port = htons(8082); // set client port
 
             // echo to the same client
             ssize_t bytesSent = serverSocket->send(buffer, bytesReceived, 0, (sockaddr*)&clientAddr,  sizeof(clientAddr));
