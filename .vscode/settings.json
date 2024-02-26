@@ -81,6 +81,8 @@
         "__bits": "cpp",
         "__nullptr": "cpp",
         "__string": "cpp",
-        "__tuple": "cpp"
+        "__tuple": "cpp",
+        "fstream": "cpp",
+        "filesystem": "cpp"
     }
 }

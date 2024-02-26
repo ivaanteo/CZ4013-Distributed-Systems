@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <cstring>
 #include "./socket.cpp"
+#include "./filemanager.cpp"
 
 class Server {
 public:
@@ -18,6 +19,20 @@ public:
         serverSocket->bind((sockaddr*)&serverAddr, sizeof(serverAddr));
 
         std::cout << "Server listening on port " << port << std::endl;
+        initFileManager();
+    }
+
+    void initFileManager() {
+        std::string serverPath = fs::current_path().string();       
+        std::string directoryPath = serverPath + "/ServerDirectory";
+
+        FileManager fileManager(directoryPath);
+        std::cout << "File Manager created" << std::endl;
+        // fileManager.clearDirectory();
+        fileManager.viewDirectory();
+        // fileManager.createDirectory("Dir1/Dir2/Dir3");
+        // fileManager.createDirectory("Dir3");
+        // fileManager.viewDirectory();
     }
     
     void run() {
@@ -51,6 +66,8 @@ private:
     sockaddr_in clientAddr;
     socklen_t clientAddrSize;
     int clientSocketDescriptor;
+    FileManager* fileManager;
+
     char buffer[1024];
     // Subscriptions -- Filename : [Pair(timestamp, IP Address:Port), ...]
     // std::unordered_map<std::string, std::vector<std::pair<int, std::string>>> subscriptions;
