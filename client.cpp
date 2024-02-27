@@ -21,7 +21,7 @@ public:
         // Set client address and port
         clientAddr.sin_family = AF_INET;
         clientAddr.sin_addr.s_addr = INADDR_ANY; // Allow OS to assign the client IP
-        clientAddr.sin_port = htons(8082); // Set client port
+        clientAddr.sin_port = htons(8081); // Set client port
 
         clientSocket->bind((sockaddr*)&clientAddr, sizeof(clientAddr));
         std::cout << "Client bound to port "<< std::endl;
@@ -96,7 +96,6 @@ private:
         requestBody["operation"] = "create";
         requestBody["pathName"] = pathName;
         sendRequest(requestBody);
-        receiveResponse();
     }
 
     void sendRequest(std::map<std::string, std::string> body) { // TODO: track increasing request/ reply ID
@@ -109,13 +108,16 @@ private:
     }
 
     void receiveResponse() {
+        std::cout << "Here" << std::endl;
+
         ssize_t bytesReceived = clientSocket->recv(buffer, sizeof(buffer), 0, (sockaddr*)&serverAddr, &serverAddrSize);
         if (bytesReceived == -1) {
             perror("Error: Could not receive data from server\n");
             return;
         }
+
         // Unmarshal response
-        Message response;
+        Message response; // TODO: NOT GETTING RESPONSE HERE
         response.unmarshal(std::vector<uint8_t>(buffer, buffer + bytesReceived));
 
         std::cout << "Received from server: " << std::endl;
@@ -176,11 +178,6 @@ private:
         //     handleDuplicateFile(input);
         // }
 
-        // Echo input
-        std::string msg = std::string(input) + "\n";
-        std::map<std::string, std::string> requestBody;
-        requestBody["userInput"] = msg;
-        sendRequest(requestBody);
         // TODO: Add more features here
         std::cout << "Invalid command. Type 'help' for a list of commands\n";   
     }

@@ -28,11 +28,11 @@ public:
         std::string serverPath = fs::current_path().string();       
         std::string directoryPath = serverPath + "/ServerDirectory";
 
-        FileManager fileManager(directoryPath);
+        fileManager = new FileManager(directoryPath);
         std::cout << "File Manager created" << std::endl;
         std::cout << "Current Directory: " << serverPath << std::endl;
-        fileManager.clearDirectory();
-        fileManager.viewDirectory();
+        fileManager->clearDirectory();
+        fileManager->viewDirectory();
     }
     
     void run() {
@@ -41,7 +41,11 @@ public:
         while (true) {
             // Reset buffer
             memset(buffer, 0, sizeof(buffer));
-            handleRequest();
+            ssize_t bytesReceived = serverSocket->recv(buffer, sizeof(buffer), 0, (sockaddr*)&clientAddr, &clientAddrSize);
+            // if bytesReceived > 0, handle request
+            if (bytesReceived > 0) {
+                handleRequest(bytesReceived);
+            }
 
             // // Receive data from client
             // ssize_t bytesReceived = serverSocket->recv(buffer, sizeof(buffer), 0, (sockaddr*)&clientAddr, &clientAddrSize);
@@ -80,9 +84,7 @@ private:
     // Server helper functions
     // Handle request
 
-    Message receiveAndUnmarshallRequest() {
-        ssize_t bytesReceived = serverSocket->recv(buffer, sizeof(buffer), 0, (sockaddr*)&clientAddr, &clientAddrSize);
-        
+    Message receiveAndUnmarshallRequest(int bytesReceived) {
         // Unmarshal request
         std::vector<uint8_t> receivedData(buffer, buffer + bytesReceived);
 
@@ -98,7 +100,7 @@ private:
         reply.setVariables(1, 1, body);
         std::vector<uint8_t> marshalledData = reply.marshal();
         std::cout << "Sending reply..." << std::endl;
-        clientAddr.sin_port = htons(8082); // set client port
+        clientAddr.sin_port = htons(8080); // set client port
         serverSocket->send(marshalledData.data(), marshalledData.size(), 0, (sockaddr*)&clientAddr, sizeof(clientAddr));
     }
 
@@ -128,23 +130,21 @@ private:
     }
 
     void handleRequest(int bytesReceived) {
-        // Here, respond to each command
+        // // Here, respond to each command
 
-        // If input is "subscribe", wait 10 seconds then send a message
-        // Retrieve first token
-        char* token = strtok(buffer, " ");
-        if (strcmp(token, "subscribe") == 0) {
-            handleSubscribe(token);
-            return;
-        }
+        // // If input is "subscribe", wait 10 seconds then send a message
+        // // Retrieve first token
+        // char* token = strtok(buffer, " ");
+        // if (strcmp(token, "subscribe") == 0) {
+        //     handleSubscribe(token);
+        //     return;
+        // }
 
-        // Send data to client
-        serverSocket->send(buffer, bytesReceived, 0, (sockaddr*)&clientAddr, clientAddrSize);
-    }
+        // // Send data to client
+        // serverSocket->send(buffer, bytesReceived, 0, (sockaddr*)&clientAddr, clientAddrSize);
 
-    void handleRequest() {
         // Receive data from client
-        Message receivedRequest = receiveAndUnmarshallRequest();
+        Message receivedRequest = receiveAndUnmarshallRequest(bytesReceived);
         std::map<std::string, std::string> attributes = receivedRequest.bodyAttributes.attributes;
 
         std::cout << "Received MessageType: " << receivedRequest.messageType << std::endl;
