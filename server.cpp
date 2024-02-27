@@ -169,6 +169,12 @@ private:
         }
         else if (operation == "duplicate") {
             handleDuplicate(attributes);
+        } 
+        else if (operation == "createdir") {
+            handleCreateDir(attributes);
+        }
+        else if (operation == "deletedir") {
+            handleDeleteDir(attributes);
         }
         else {
             handleEcho(receivedRequest);
@@ -212,6 +218,18 @@ private:
         std::string pathName = attributes["pathName"];
         std::string newPathName = attributes["newPathName"];
         std::map<std::string, std::string> reply = fileManager->duplicateFile(pathName, newPathName);
+        sendReply(reply);
+    }
+
+    void handleCreateDir(std::map<std::string, std::string> attributes) {
+        std::string pathName = attributes["pathName"];
+        std::map<std::string, std::string> reply = fileManager->createDirectory(pathName);
+        sendReply(reply);
+    }
+
+    void handleDeleteDir(std::map<std::string, std::string> attributes) {
+        std::string pathName = attributes["pathName"];
+        std::map<std::string, std::string> reply = fileManager->deleteDirectory(pathName);
         sendReply(reply);
     }
 

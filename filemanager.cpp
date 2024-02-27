@@ -43,13 +43,16 @@ public:
         }
     } 
 
-    void createDirectory(const std::string& pathName) {
+    std::map<std::string, std::string> createDirectory(const std::string& pathName) {
+        std::map<std::string, std::string> response;
         std::string newPath = serverPath + "/" + pathName;
         std::string tempPath = serverPath;
 
         if (fs::exists(newPath)) {
             std::cerr << "Error: Directory already exists." << std::endl;
-            return;
+            response["responseCode"] = "400";
+            response["response"] = "Directory already exists.";
+            return response;
         }
 
         // split pathName using '/' as delimiter
@@ -70,6 +73,10 @@ public:
             fs::create_directory(tempPath);
             std::cout << "Directory " << dir << " created." << std::endl;
         }
+
+        response["responseCode"] = "200";
+        response["response"] = "Directory created.";
+        return response;
     }
 
     void clearDirectory() {
@@ -79,15 +86,21 @@ public:
         std::cout << "ServerDirectory cleared." << std::endl;
     }
 
-    void deleteDirectory(const std::string& pathName) {
+    std::map<std::string, std::string> deleteDirectory(const std::string& pathName) {
+        std::map<std::string, std::string> response;
         std::string newPath = serverPath + "/" + pathName;
         if (!fs::exists(newPath)) {
             std::cerr << "Error: Directory doesn't exist." << std::endl;
-            return;
+            response["responseCode"] = "400";
+            response["response"] = "Directory doesn't exist.";
+            return response;
         }
 
         fs::remove_all(newPath);
         std::cout << "Directory " << pathName << " deleted." << std::endl;
+        response["responseCode"] = "200";
+        response["response"] = "Directory deleted.";
+        return response;
     }
     
     std::map<std::string, std::string> createFile(const std::string& pathName) {

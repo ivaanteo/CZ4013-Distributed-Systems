@@ -148,6 +148,24 @@ private:
         sendRequest(requestBody);
     }
 
+    void handleCreateDir() {
+        std::string pathName;
+        getUserInput("Enter the path name of the directory you would like to create: ", pathName);
+        std::map<std::string, std::string> requestBody;
+        requestBody["operation"] = "createdir";
+        requestBody["pathName"] = pathName;
+        sendRequest(requestBody);
+    }
+
+    void handleDeleteDir() {
+        std::string pathName;
+        getUserInput("Enter the path name of the directory you would like to delete: ", pathName);
+        std::map<std::string, std::string> requestBody;
+        requestBody["operation"] = "deletedir";
+        requestBody["pathName"] = pathName;
+        sendRequest(requestBody);
+    }
+
     void sendRequest(std::map<std::string, std::string> body) { // TODO: track increasing request/ reply ID
         Message request;
         request.setVariables(0, 1, body);
@@ -219,13 +237,13 @@ private:
         }
         else if (strcmp(input, "insert") == 0) {
             handleInsertFile();
+        } else if (strcmp(input, "createdir") == 0) {
+            handleCreateDir();
         }
         // if (strcmp(input, "view", 4) == 0) {
         //     handleView();
         // }
-        // if (strcmp(input, "createdir") == 0) {
-        //     handleCreateDir();
-        // }
+        
         // if (strcmp(input, "deletedir") == 0) {
         //     handleDeleteDir();
         // }
