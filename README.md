@@ -10,14 +10,14 @@ Socket programming stuff
 ### compile:
 
 ```
-g++ client.cpp -o bin/client
-g++ server.cpp -o bin/server
+make client
+make server
 ```
 
-### compiling with c++11
 
+### compile both at once
 ```
-g++ -std=c++11 server.cpp -o bin/safe-server
+make all
 ```
 
 ### run:
@@ -28,4 +28,9 @@ g++ -std=c++11 server.cpp -o bin/safe-server
 ```
 ./bin/server 8080
 ./bin/client
+```
+
+### run both
+```
+./run.sh 8080
 ```
