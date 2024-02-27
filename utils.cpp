@@ -5,8 +5,11 @@
 #include <cstring>
 #include <netinet/in.h> // For htonl and ntohl
 
+// Typealias for attribute map
+using AttributeMap = std::map<std::string, std::string>;
+
 struct BodyAttributes {
-    std::map<std::string, std::string> attributes;
+    AttributeMap attributes;
 
     // Marshalling function for BodyAttributes
     std::vector<uint8_t> marshal() const {

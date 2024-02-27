@@ -134,7 +134,7 @@ private:
         // Retrieve first token
         char* token = strtok(buffer, " ");
         if (strcmp(token, "subscribe") == 0) {
-            handleSubscribe(token);
+            // handleSubscribe();
             return;
         }
 
@@ -156,9 +156,9 @@ private:
 
         std::string operation = attributes["operation"];
         std::cout << "Operation: " << operation << std::endl;
-        // if (operation == "subscribe") {
-        //     handleSubscribe(attributes);
-        // }
+        if (operation == "subscribe") {
+            handleSubscribe(attributes);
+        }
         if (operation == "create") {
             handleCreate(attributes);
         }
@@ -180,25 +180,15 @@ private:
         sendReply(reply);
     }
 
-    void handleSubscribe(char* token) {
+    void handleSubscribe(std::map<std::string, std::string> attributes) {
         // Simulate waiting for data
         std::cout << "Subscribing..." << std::endl;
 
-        // Print buffer
-        std::cout << "Buffer: " << buffer << std::endl;
-        // Split the message into tokens
-        token = strtok(NULL, " ");
-        std::string fileName = token;
-        std::cout << "File: " << fileName << std::endl;
-        token = strtok(NULL, " ");
-        std::string timestamp = token;
-        std::cout << "Timestamp: " << timestamp << std::endl;
-        token = strtok(NULL, " ");
-        std::string ipAddress = token;
-        std::cout << "IP Address: " << ipAddress << std::endl;
-        token = strtok(NULL, " ");
-        std::string port = token;
-        std::cout << "Port: " << port << std::endl;
+        // Retrieve attributes
+        std::string pathName = attributes["pathName"];
+        std::string timestamp = attributes["timestamp"];
+        std::string ipAddress = attributes["ipAddress"];
+        std::string port = attributes["port"];
 
         // Check validity of timestamp
         if (std::stoi(timestamp) < time(0)) {
@@ -207,8 +197,8 @@ private:
         }
 
         // Check validaity of file name
-        if (fileName != "file1" && fileName != "file2") {
-            std::cerr << "Error: Invalid file name" << std::endl;
+        if (pathName != "file1" && pathName != "file2") {
+            std::cerr << "Error: Invalid path name" << std::endl;
             return;
         }
 
@@ -225,7 +215,10 @@ private:
 
         // Send message to client
         const char* message = "You are now subscribed!"; // Simulate updated data
-        serverSocket->send(message, strlen(message), 0, (sockaddr*)&clientAddr, clientAddrSize);
+        
+        AttributeMap reply;
+        reply["response"] = message;
+        sendReply(reply);
         std::cout << "Sent to client: " << message << std::endl;
     }
 };

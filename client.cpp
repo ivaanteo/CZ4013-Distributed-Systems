@@ -58,22 +58,33 @@ private:
 
     void handleSubscribe() {
 
-        std::string fileName;
-        getUserInput("Enter the file you would like to subscribe to: ", fileName);
+        std::string pathName;
+        getUserInput("Enter the path name of the file you would like to subscribe to: ", pathName);
 
         std::string duration;
         getUserInput("Enter the duration you would like to subscribe for (in seconds): ", duration);
-
         std::string timestamp = std::to_string(time(0) + std::stoi(duration));
 
         std::string ipAddress = clientSocket->getIP();
         std::string port = std::to_string(clientSocket->getPort());
 
-        // // Send subscribe message to server
-        std::string request = "subscribe " + fileName + " " + timestamp + " " + ipAddress + " " + port;
+        // Send subscribe message to server
         std::map<std::string, std::string> requestBody;
-        requestBody["msg"] = request;
+        requestBody["operation"] = "subscribe";
+        requestBody["pathName"] = pathName;
+        requestBody["timestamp"] = timestamp;
+        requestBody["ipAddress"] = ipAddress;
+        requestBody["port"] = port;
         sendRequest(requestBody);
+        // Repeatedly receive updates from server
+
+        receiveResponse();
+
+
+        // std::string request = "subscribe " + fileName + " " + timestamp + " " + ipAddress + " " + port;
+        // std::map<std::string, std::string> requestBody;
+        // requestBody["msg"] = request;
+        // sendRequest(requestBody);
 
 
         // // Receive response on whether subscription was successful
@@ -108,7 +119,7 @@ private:
         receiveResponse();
     }
 
-    void receiveResponse() {
+    Message receiveResponse() {
         ssize_t bytesReceived = clientSocket->recv(buffer, sizeof(buffer), 0, (sockaddr*)&serverAddr, &serverAddrSize);
         if (bytesReceived == -1) {
             perror("Error: Could not receive data from server\n");
@@ -125,6 +136,7 @@ private:
         for (const auto& pair : response.bodyAttributes.attributes) {
             std::cout << pair.first << ": " << pair.second << std::endl;
         }
+        return response;
     }
 
     void handleUserInput(char* input) {
