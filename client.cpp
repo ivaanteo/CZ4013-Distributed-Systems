@@ -9,14 +9,14 @@
 #include "./utils.cpp"
 class Client {
 public:
-    Client() {
+    Client(int port) {
         // Create a socket
         clientSocket = new Socket(AF_INET, SOCK_DGRAM, 0);
 
         // Create server address
         serverAddr.sin_family = AF_INET;
         serverAddr.sin_addr.s_addr = INADDR_ANY; // Accept connections on any IP address
-        serverAddr.sin_port = htons(8081); // Server port
+        serverAddr.sin_port = htons(port); // Server port
 
         // Set client address and port
         clientAddr.sin_family = AF_INET;
@@ -187,9 +187,16 @@ private:
     
 };
 
-int main() {
+int main(int argc, char* argv[]) {
+
+    if (argc != 2) {
+        std::cerr << "Usage: " << argv[0] << " <port>\n";
+        exit(1);
+    }
+
+    int port = std::stoi(argv[1]);
     
-    Client client;
+    Client client(port);
 
     client.run();
 

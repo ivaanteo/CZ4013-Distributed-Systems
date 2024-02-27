@@ -16,7 +16,7 @@ port=$1
 server_pid=$!
 
 # Run the client with the same port number
-./bin/client
+./bin/client $port
 
 # After the client is done, kill the server
 kill $server_pid
