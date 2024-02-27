@@ -171,8 +171,13 @@ private:
         request.setVariables(0, 1, body);
         std::vector<uint8_t> marshalledData = request.marshal();
         clientSocket->send(marshalledData.data(), marshalledData.size(), 0, (sockaddr*)&serverAddr, sizeof(serverAddr));
-        std::cout << "Request sent..." << std::endl;
         receiveResponse();
+    }
+
+    void handleView() {
+        std::map<std::string, std::string> requestBody;
+        requestBody["operation"] = "view";
+        sendRequest(requestBody);
     }
 
     void receiveResponse() {
@@ -239,23 +244,16 @@ private:
             handleInsertFile();
         } else if (strcmp(input, "createdir") == 0) {
             handleCreateDir();
+        } else if (strcmp(input, "deletedir") == 0) {
+            handleDeleteDir();
+        } else if (strcmp(input, "view") == 0) {
+            handleView();
         }
-        // if (strcmp(input, "view", 4) == 0) {
-        //     handleView();
-        // }
-        
-        // if (strcmp(input, "deletedir") == 0) {
-        //     handleDeleteDir();
-        // }
-
-
-
-        // if (strcmp(input, "duplicate") == 0) {
-        //     handleDuplicateFile();
-        // }
         else std::cout << "Invalid command. Type 'help' for a list of commands\n";   
 
-        // TODO: Add more features here
+        
+
+        
         
     }
     

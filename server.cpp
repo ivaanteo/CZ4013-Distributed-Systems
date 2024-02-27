@@ -100,24 +100,10 @@ private:
         Message reply;
         reply.setVariables(1, 1, body);
         std::vector<uint8_t> marshalledData = reply.marshal();
-        std::cout << "Sending reply..." << std::endl;
+
         clientAddr.sin_port = htons(8081); // set client port
         serverSocket->send(marshalledData.data(), marshalledData.size(), 0, (sockaddr*)&clientAddr, sizeof(clientAddr));
     }
-
-    // void testMarshalling() {
-    //     Message receivedRequest = receiveAndUnmarshallRequest();
-
-    //     // Accessing fields of unmarshalled request
-    //     std::cout << "Received MessageType: " << receivedRequest.messageType << std::endl;
-    //     std::cout << "Received RequestId: " << receivedRequest.requestId << std::endl;
-    //     std::cout << "Received BodyAttributes:" << std::endl;
-    //     for (const auto& pair : receivedRequest.bodyAttributes.attributes) {
-    //         std::cout << pair.first << ": " << pair.second << std::endl;
-    //     }
-
-    //     sendReply(receivedRequest.bodyAttributes.attributes);
-    // }
 
     int receiveRequest() {
         // Receive data from client
@@ -175,6 +161,8 @@ private:
         }
         else if (operation == "deletedir") {
             handleDeleteDir(attributes);
+        } else if (operation == "view") {
+            handleView(attributes);
         }
         else {
             handleEcho(receivedRequest);
@@ -230,6 +218,11 @@ private:
     void handleDeleteDir(std::map<std::string, std::string> attributes) {
         std::string pathName = attributes["pathName"];
         std::map<std::string, std::string> reply = fileManager->deleteDirectory(pathName);
+        sendReply(reply);
+    }
+
+    void handleView(std::map<std::string, std::string> attributes) {
+        std::map<std::string, std::string> reply = fileManager->viewDirectory();
         sendReply(reply);
     }
 

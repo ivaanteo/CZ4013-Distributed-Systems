@@ -13,18 +13,8 @@ class FileManager {
 public:
     FileManager(const std::string& serverPath): serverPath(serverPath) {}
 
-    void viewDirectory() {
-        std::cout << "Contents of Root Directory: " << serverPath << std::endl;
-        if (!fs::exists(serverPath) || !fs::is_directory(serverPath)) {
-            std::cerr << "Error: Server directory doesn't exist or is not a directory." << std::endl;
-            return;
-        }
-        
-        int depth = 0;
-        printDirectoryContents(serverPath, depth);
-    }
-
-    void printDirectoryContents(const std::string& directoryPath, int depth = 0) {
+    std::string getDirectoryContentsAsString(const std::string& directoryPath, int depth = 0) {
+        std::stringstream result;
         for (const auto& entry : fs::directory_iterator(directoryPath)) {
             std::stringstream ss;
             for (int i = 0; i < depth; ++i) {
@@ -33,14 +23,30 @@ public:
             ss << entry.path().filename().string();
             
             if (fs::is_directory(entry)) {
-                std::cout << ss.str() << " [Directory]" << std::endl;
-                printDirectoryContents(entry.path().string(), depth + 1); // Recursive call for nested directories
+                result << ss.str() << " [Directory]\n";
+                result << getDirectoryContentsAsString(entry.path().string(), depth + 1); // Recursive call for nested directories
             } else if (fs::is_regular_file(entry)) {
-                std::cout << ss.str() << " [File]" << std::endl;
+                result << ss.str() << " [File]\n";
             } else if (fs::is_symlink(entry)) {
-                std::cout << ss.str() << " [Symbolic Link]" << std::endl;
+                result << ss.str() << " [Symbolic Link]\n";
             }
         }
+        return result.str();
+    }
+
+    std::map<std::string, std::string> viewDirectory() {
+        std::map<std::string, std::string> response;
+        std::cout << "Contents of Root Directory: " << serverPath << std::endl;
+        if (!fs::exists(serverPath) || !fs::is_directory(serverPath)) {
+            std::cerr << "Error: Server directory doesn't exist or is not a directory." << std::endl;
+            response["responseCode"] = "400";
+            response["response"] = "Server directory doesn't exist or is not a directory.";
+            return response;
+        }
+        
+        response["responseCode"] = "200";
+        response["response"] = "Contents: \n" + getDirectoryContentsAsString(serverPath);
+        return response;
     } 
 
     std::map<std::string, std::string> createDirectory(const std::string& pathName) {
