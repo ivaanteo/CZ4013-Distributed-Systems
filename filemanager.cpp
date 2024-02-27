@@ -91,6 +91,10 @@ public:
     
     std::string createFile(const std::string& pathName) {
         std::string newPath = serverPath + "/" + pathName;
+        if (fs::exists(newPath)) {
+            std::cerr << "Error: File already exists." << std::endl;
+            return "File already exists.";
+        }
         std::ofstream file(newPath);
         file.close();
         std::cout << "File " << pathName << " created." << std::endl;

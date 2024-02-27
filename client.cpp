@@ -119,8 +119,6 @@ private:
     }
 
     void receiveResponse() {
-        std::cout << "Here" << std::endl;
-
         ssize_t bytesReceived = clientSocket->recv(buffer, sizeof(buffer), 0, (sockaddr*)&serverAddr, &serverAddrSize);
         if (bytesReceived == -1) {
             perror("Error: Could not receive data from server\n");
@@ -128,16 +126,9 @@ private:
         }
 
         // Unmarshal response
-        Message response; // TODO: NOT GETTING RESPONSE HERE
+        Message response;
         response.unmarshal(std::vector<uint8_t>(buffer, buffer + bytesReceived));
-
-        std::cout << "Received from server: " << std::endl;
-        std::cout << "Received MessageType: " << response.messageType << std::endl;
-        std::cout << "Received RequestId: " << response.requestId << std::endl;
-        std::cout << "Received BodyAttributes:" << std::endl;
-        for (const auto& pair : response.bodyAttributes.attributes) {
-            std::cout << pair.first << ": " << pair.second << std::endl;
-        }
+        std::cout << "Result: " << response.bodyAttributes.attributes["response"]  << std::endl;
         return;
     }
 
@@ -146,7 +137,7 @@ private:
             std::cout << "Exiting...\n";
             exit(0);
         }
-        if (strcmp(input, "help") == 0){
+        else if (strcmp(input, "help") == 0){
             std::cout << "Commands:\n"
                     << "view - View structure of main directory and files\n"
                     << "createdir <pathname> - Create a new directory\n"
@@ -161,7 +152,7 @@ private:
                     << "subscribe - Subscribe to updates for a file\n";
             return;
         }
-        if (strcmp(input, "subscribe") == 0){
+        else if (strcmp(input, "subscribe") == 0){
             handleSubscribe();
             return;
         }
@@ -174,7 +165,7 @@ private:
         // if (strcmp(input, "deletedir", 9) == 0) {
         //     handleDeleteDir(input);
         // }
-        if (strcmp(input, "create") == 0) {
+        else if (strcmp(input, "create") == 0) {
             handleCreateFile();
         }
         // if (strcmp(input, "read", 4) == 0) {
@@ -189,9 +180,10 @@ private:
         // if (strcmp(input, "duplicate", 9) == 0) {
         //     handleDuplicateFile(input);
         // }
+        else std::cout << "Invalid command. Type 'help' for a list of commands\n";   
 
         // TODO: Add more features here
-        std::cout << "Invalid command. Type 'help' for a list of commands\n";   
+        
     }
     
 };

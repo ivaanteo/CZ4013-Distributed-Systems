@@ -101,7 +101,7 @@ private:
         reply.setVariables(1, 1, body);
         std::vector<uint8_t> marshalledData = reply.marshal();
         std::cout << "Sending reply..." << std::endl;
-        clientAddr.sin_port = htons(8080); // set client port
+        clientAddr.sin_port = htons(8081); // set client port
         serverSocket->send(marshalledData.data(), marshalledData.size(), 0, (sockaddr*)&clientAddr, sizeof(clientAddr));
     }
 
