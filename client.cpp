@@ -133,6 +133,21 @@ private:
         sendRequest(requestBody);
     }
 
+    void handleInsertFile() {
+        std::string pathName;
+        getUserInput("Enter the path name of the file you would like to insert into: ", pathName);
+        std::string offset;
+        getUserInput("Enter the offset at which you would like to insert: ", offset);
+        std::string content;
+        getUserInput("Enter the content you would like to insert: ", content);
+        std::map<std::string, std::string> requestBody;
+        requestBody["operation"] = "insert";
+        requestBody["pathName"] = pathName;
+        requestBody["offset"] = offset;
+        requestBody["content"] = content;
+        sendRequest(requestBody);
+    }
+
     void sendRequest(std::map<std::string, std::string> body) { // TODO: track increasing request/ reply ID
         Message request;
         request.setVariables(0, 1, body);
@@ -170,7 +185,8 @@ private:
             exit(0);
         }
         else if (strcmp(input, "help") == 0){
-            std::cout << "Commands:\n"
+            std::cout << "===========================================\n" 
+                    << "Commands:\n"
                     << "view - View structure of main directory and files\n"
                     << "createdir - Create a new directory\n"
                     << "deletedir - Delete a directory\n"
@@ -181,7 +197,11 @@ private:
                     << "duplicate - Duplicate the file with a new filename\n"
                     << "help - Display this message\n"
                     << "exit - Exit the program\n"
-                    << "subscribe - Subscribe to updates for a file\n";
+                    << "subscribe - Subscribe to updates for a file\n"
+                    << "===========================================\n"
+                    << "\n";
+
+
             return;
         }
         else if (strcmp(input, "subscribe") == 0){
@@ -197,6 +217,9 @@ private:
         else if (strcmp(input, "read") == 0) {
             handleReadFile();
         }
+        else if (strcmp(input, "insert") == 0) {
+            handleInsertFile();
+        }
         // if (strcmp(input, "view", 4) == 0) {
         //     handleView();
         // }
@@ -207,9 +230,7 @@ private:
         //     handleDeleteDir();
         // }
 
-        // if (strcmp(input, "insert") == 0) {
-        //     handleInsertFile();
-        // }
+
 
         // if (strcmp(input, "duplicate") == 0) {
         //     handleDuplicateFile();

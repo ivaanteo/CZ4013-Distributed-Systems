@@ -167,33 +167,27 @@ public:
         file.close();
 
         response["responseCode"] = "200";
-        response["response"] = buffer;
+        std::string buffer_str(buffer);
+        response["response"] = "Result: " + buffer_str;
         return response;
     }
 
-    void duplicateFile(const std::string& oldPath, const std::string& newPath) {
-        std::string oldFilePath = serverPath + "/" + oldPath;
-        std::string newFilePath = serverPath + "/" + newPath;
-        if (!fs::exists(oldFilePath)) {
-            std::cerr << "Error: File doesn't exist." << std::endl;
-            return;
-        }
-
-        fs::copy_file(oldFilePath, newFilePath);
-        std::cout << "File " << oldPath << " duplicated to " << newPath << std::endl;
-    }
-
-    void editFile(const std::string& pathName, int offset, const std::string& content) {
+    std::map<std::string, std::string> editFile(const std::string& pathName, int offset, const std::string& content) {
+        std::map<std::string, std::string> response;
         std::string newPath = serverPath + "/" + pathName;
         if (!fs::exists(newPath)) {
             std::cerr << "Error: File doesn't exist." << std::endl;
-            return;
+            response["responseCode"] = "400";
+            response["response"] = "File doesn't exist.";
+            return response;
         }
 
         std::fstream file(newPath, std::ios::in | std::ios::out);
         if (!file.is_open()) {
             std::cerr << "Error: Could not open file." << std::endl;
-            return;
+            response["responseCode"] = "400";
+            response["response"] = "Could not open file.";
+            return response;
         }
 
         // if offset exceeds length of file
@@ -201,7 +195,9 @@ public:
         int length = file.tellg();
         if (offset > length) {
             std::cerr << "Error: Offset exceeds length of file." << std::endl;
-            return;
+            response["responseCode"] = "400";
+            response["response"] = "Offset exceeds length of file.";
+            return response;
         }
 
         file.seekp(offset);
@@ -218,7 +214,31 @@ public:
         file.write(remainingContent.c_str(), remainingContent.size());
         file.close();
         std::cout << "File " << pathName << " edited." << std::endl;
+
+        response["responseCode"] = "200";
+        response["response"] = "File edited.";
+        return response;
     }
+
+    std::map<std::string, std::string> duplicateFile(const std::string& oldPath, const std::string& newPath) {
+        std::map<std::string, std::string> response;
+        std::string oldFilePath = serverPath + "/" + oldPath;
+        std::string newFilePath = serverPath + "/" + newPath;
+        if (!fs::exists(oldFilePath)) {
+            std::cerr << "Error: File doesn't exist." << std::endl;
+            response["responseCode"] = "400";
+            response["response"] = "File doesn't exist.";
+            return response;
+        }
+
+        fs::copy_file(oldFilePath, newFilePath);
+        std::cout << "File " << oldPath << " duplicated to " << newPath << std::endl;
+
+        response["responseCode"] = "200";
+        response["response"] = "File duplicated.";
+        return response;
+    }
+
 
     private:
         std::string serverPath;

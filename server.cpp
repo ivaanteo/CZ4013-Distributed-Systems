@@ -164,6 +164,12 @@ private:
         else if (operation == "read") {
             handleRead(attributes);
         }
+        else if (operation == "insert") {
+            handleInsert(attributes);
+        }
+        else if (operation == "duplicate") {
+            handleDuplicate(attributes);
+        }
         else {
             handleEcho(receivedRequest);
         }
@@ -191,6 +197,21 @@ private:
         std::string offset = attributes["offset"];
         std::string length = attributes["length"];
         std::map<std::string, std::string> reply = fileManager->readFile(pathName, std::stoi(offset), std::stoi(length));
+        sendReply(reply);
+    }
+
+    void handleInsert(std::map<std::string, std::string> attributes) {
+        std::string pathName = attributes["pathName"];
+        std::string offset = attributes["offset"];
+        std::string content = attributes["content"];
+        std::map<std::string, std::string> reply = fileManager->editFile(pathName, std::stoi(offset), content);
+        sendReply(reply);
+    }
+
+    void handleDuplicate(std::map<std::string, std::string> attributes) {
+        std::string pathName = attributes["pathName"];
+        std::string newPathName = attributes["newPathName"];
+        std::map<std::string, std::string> reply = fileManager->duplicateFile(pathName, newPathName);
         sendReply(reply);
     }
 
