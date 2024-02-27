@@ -88,6 +88,7 @@ private:
         // Unmarshal request
         std::vector<uint8_t> receivedData(buffer, buffer + bytesReceived);
 
+
         // Create a Message object and unmarshal the received data
         Message receivedRequest;
         receivedRequest.unmarshal(receivedData);
@@ -130,29 +131,24 @@ private:
     }
 
     void handleRequest(int bytesReceived) {
-        // // Here, respond to each command
+        // Here, respond to each command
 
         // If input is "subscribe", wait 10 seconds then send a message
         // Retrieve first token
-        char* token = strtok(buffer, " ");
-        if (strcmp(token, "subscribe") == 0) {
-            // handleSubscribe();
-            return;
-        }
+        // char* token = strtok(buffer, " ");
+        // if (strcmp(token, "subscribe") == 0) {
+        //     // handleSubscribe();
+        //     return;
+        // }
 
         // // Send data to client
         // serverSocket->send(buffer, bytesReceived, 0, (sockaddr*)&clientAddr, clientAddrSize);
 
         // Receive data from client
-        Message receivedRequest = receiveAndUnmarshallRequest(bytesReceived);
-        std::map<std::string, std::string> attributes = receivedRequest.bodyAttributes.attributes;
 
-        std::cout << "Received MessageType: " << receivedRequest.messageType << std::endl;
-        std::cout << "Received RequestId: " << receivedRequest.requestId << std::endl;
-        std::cout << "Received BodyAttributes:" << std::endl;
-        for (const auto& pair : receivedRequest.bodyAttributes.attributes) {
-            std::cout << pair.first << ": " << pair.second << std::endl;
-        }
+        Message receivedRequest = receiveAndUnmarshallRequest(bytesReceived);
+
+        std::map<std::string, std::string> attributes = receivedRequest.bodyAttributes.attributes;
 
         std::string operation = attributes["operation"];
         std::cout << "Operation: " << operation << std::endl;

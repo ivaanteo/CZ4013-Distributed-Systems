@@ -138,7 +138,7 @@ private:
         for (const auto& pair : response.bodyAttributes.attributes) {
             std::cout << pair.first << ": " << pair.second << std::endl;
         }
-        return response;
+        return;
     }
 
     void handleUserInput(char* input) {
