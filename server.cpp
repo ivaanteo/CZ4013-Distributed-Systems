@@ -162,6 +162,14 @@ private:
         if (operation == "create") {
             handleCreate(attributes);
         }
+        else {
+            handleEcho(receivedRequest);
+        }
+    }
+
+    void handleEcho(Message receivedRequest) {
+        // Send data to client
+        sendReply(receivedRequest.bodyAttributes.attributes);
     }
 
     void handleCreate(std::map<std::string, std::string> attributes) {
