@@ -1,2 +1,3 @@
 bin/*
 ServerDirectory/*
+.vscode/c_cpp_properties.json

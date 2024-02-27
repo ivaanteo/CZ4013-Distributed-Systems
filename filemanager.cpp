@@ -89,11 +89,12 @@ public:
         std::cout << "Directory " << pathName << " deleted." << std::endl;
     }
     
-    void createFile(const std::string& pathName) {
+    std::string createFile(const std::string& pathName) {
         std::string newPath = serverPath + "/" + pathName;
         std::ofstream file(newPath);
         file.close();
         std::cout << "File " << pathName << " created." << std::endl;
+        return "File created.";
     }
 
     void deleteFile(const std::string& pathName) {

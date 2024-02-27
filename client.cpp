@@ -88,12 +88,23 @@ private:
         
     }
 
+
+    void handleCreateFile() {
+        std::string pathName;
+        getUserInput("Enter the path name of the file you would like to create: ", pathName);
+        std::map<std::string, std::string> requestBody;
+        requestBody["operation"] = "create";
+        requestBody["pathName"] = pathName;
+        sendRequest(requestBody);
+        receiveResponse();
+    }
+
     void sendRequest(std::map<std::string, std::string> body) { // TODO: track increasing request/ reply ID
         Message request;
         request.setVariables(0, 1, body);
         std::vector<uint8_t> marshalledData = request.marshal();
         clientSocket->send(marshalledData.data(), marshalledData.size(), 0, (sockaddr*)&serverAddr, sizeof(serverAddr));
-
+        std::cout << "Request sent..." << std::endl;
         receiveResponse();
     }
 
@@ -140,12 +151,35 @@ private:
             handleSubscribe();
             return;
         }
-
+        // if (strcmp(input, "view", 4) == 0) {
+        //     handleView();
+        // }
+        // if (strcmp(input, "createdir", 9) == 0) {
+        //     handleCreateDir(input);
+        // }
+        // if (strcmp(input, "deletedir", 9) == 0) {
+        //     handleDeleteDir(input);
+        // }
+        if (strcmp(input, "create") == 0) {
+            handleCreateFile();
+        }
+        // if (strcmp(input, "read", 4) == 0) {
+        //     handleReadFile(input);
+        // }
+        // if (strcmp(input, "insert", 6) == 0) {
+        //     handleInsertFile(input);
+        // }
+        // if (strcmp(input, "delete", 6) == 0) {
+        //     handleDeleteFile(input);
+        // }
+        // if (strcmp(input, "duplicate", 9) == 0) {
+        //     handleDuplicateFile(input);
+        // }
 
         // Echo input
         std::string msg = std::string(input) + "\n";
         std::map<std::string, std::string> requestBody;
-        requestBody["msg"] = msg;
+        requestBody["userInput"] = msg;
         sendRequest(requestBody);
         // TODO: Add more features here
         std::cout << "Invalid command. Type 'help' for a list of commands\n";   
