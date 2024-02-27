@@ -155,8 +155,11 @@ private:
         if (operation == "subscribe") {
             handleSubscribe(attributes);
         }
-        if (operation == "create") {
+        else if (operation == "create") {
             handleCreate(attributes);
+        }
+        else if (operation == "delete") {
+            handleDelete(attributes);
         }
         else {
             handleEcho(receivedRequest);
@@ -171,6 +174,14 @@ private:
     void handleCreate(std::map<std::string, std::string> attributes) {
         std::string pathName = attributes["pathName"];
         std::string response = fileManager->createFile(pathName);
+        std::map<std::string, std::string> reply;
+        reply["response"] = response;
+        sendReply(reply);
+    }
+
+    void handleDelete(std::map<std::string, std::string> attributes) {
+        std::string pathName = attributes["pathName"];
+        std::string response = fileManager->deleteFile(pathName);
         std::map<std::string, std::string> reply;
         reply["response"] = response;
         sendReply(reply);

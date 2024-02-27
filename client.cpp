@@ -32,7 +32,7 @@ public:
         while (true) {
             // Get user input
             std::string msg;
-            getUserInput("Enter a message: ", msg);
+            getUserInput("Enter an operation. For more information, enter 'help': ", msg);
             handleUserInput(&msg[0]);
         }
     }
@@ -109,6 +109,15 @@ private:
         sendRequest(requestBody);
     }
 
+    void handleDeleteFile() {
+        std::string pathName;
+        getUserInput("Enter the path name of the file you would like to delete: ", pathName);
+        std::map<std::string, std::string> requestBody;
+        requestBody["operation"] = "delete";
+        requestBody["pathName"] = pathName;
+        sendRequest(requestBody);
+    }
+
     void sendRequest(std::map<std::string, std::string> body) { // TODO: track increasing request/ reply ID
         Message request;
         request.setVariables(0, 1, body);
@@ -140,13 +149,13 @@ private:
         else if (strcmp(input, "help") == 0){
             std::cout << "Commands:\n"
                     << "view - View structure of main directory and files\n"
-                    << "createdir <pathname> - Create a new directory\n"
-                    << "deletedir <pathname> - Delete a directory\n"
-                    << "create <pathname> - Create empty file\n"
-                    << "read <pathname> <offset (in bytes)> <number of bytes> - Read content from the file from offset\n"
-                    << "insert <pathname> <offset (in bytes)> <content> - Insert content at a specific position in the file\n"
-                    << "delete <pathname> - Delete content from the file\n"
-                    << "duplicate <pathname> <new pathname> - Duplicate the file with a new filename\n"
+                    << "createdir - Create a new directory\n"
+                    << "deletedir - Delete a directory\n"
+                    << "create - Create empty file\n"
+                    << "read - Read content from the file from offset\n"
+                    << "insert - Insert content at a specific position in the file\n"
+                    << "delete - Delete content from the file\n"
+                    << "duplicate - Duplicate the file with a new filename\n"
                     << "help - Display this message\n"
                     << "exit - Exit the program\n"
                     << "subscribe - Subscribe to updates for a file\n";
@@ -155,6 +164,12 @@ private:
         else if (strcmp(input, "subscribe") == 0){
             handleSubscribe();
             return;
+        }
+        else if (strcmp(input, "create") == 0) {
+            handleCreateFile();
+        }
+        else if (strcmp(input, "delete") == 0) {
+            handleDeleteFile();
         }
         // if (strcmp(input, "view", 4) == 0) {
         //     handleView();
@@ -165,18 +180,13 @@ private:
         // if (strcmp(input, "deletedir", 9) == 0) {
         //     handleDeleteDir(input);
         // }
-        else if (strcmp(input, "create") == 0) {
-            handleCreateFile();
-        }
         // if (strcmp(input, "read", 4) == 0) {
         //     handleReadFile(input);
         // }
         // if (strcmp(input, "insert", 6) == 0) {
         //     handleInsertFile(input);
         // }
-        // if (strcmp(input, "delete", 6) == 0) {
-        //     handleDeleteFile(input);
-        // }
+
         // if (strcmp(input, "duplicate", 9) == 0) {
         //     handleDuplicateFile(input);
         // }

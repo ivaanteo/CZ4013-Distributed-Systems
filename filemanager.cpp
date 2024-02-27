@@ -101,15 +101,18 @@ public:
         return "File created.";
     }
 
-    void deleteFile(const std::string& pathName) {
+    std::string deleteFile(const std::string& pathName) {
         std::string newPath = serverPath + "/" + pathName;
+        std::cout << newPath << std::endl;
         if (!fs::exists(newPath)) {
             std::cerr << "Error: File doesn't exist." << std::endl;
-            return;
+            return "File doesn't exist.";
         }
 
         fs::remove(newPath);
         std::cout << "File " << pathName << " deleted." << std::endl;
+
+        return "File deleted.";
     }
 
     void duplicateFile(const std::string& oldPath, const std::string& newPath) {
