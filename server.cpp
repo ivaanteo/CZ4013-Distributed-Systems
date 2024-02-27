@@ -161,6 +161,9 @@ private:
         else if (operation == "delete") {
             handleDelete(attributes);
         }
+        else if (operation == "read") {
+            handleRead(attributes);
+        }
         else {
             handleEcho(receivedRequest);
         }
@@ -173,17 +176,21 @@ private:
 
     void handleCreate(std::map<std::string, std::string> attributes) {
         std::string pathName = attributes["pathName"];
-        std::string response = fileManager->createFile(pathName);
-        std::map<std::string, std::string> reply;
-        reply["response"] = response;
+        std::map<std::string, std::string> reply = fileManager->createFile(pathName);
         sendReply(reply);
     }
 
     void handleDelete(std::map<std::string, std::string> attributes) {
         std::string pathName = attributes["pathName"];
-        std::string response = fileManager->deleteFile(pathName);
-        std::map<std::string, std::string> reply;
-        reply["response"] = response;
+        std::map<std::string, std::string> reply = fileManager->deleteFile(pathName);
+        sendReply(reply);
+    }
+
+    void handleRead(std::map<std::string, std::string> attributes) {
+        std::string pathName = attributes["pathName"];
+        std::string offset = attributes["offset"];
+        std::string length = attributes["length"];
+        std::map<std::string, std::string> reply = fileManager->readFile(pathName, std::stoi(offset), std::stoi(length));
         sendReply(reply);
     }
 

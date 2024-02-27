@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <map>
 
 namespace fs = std::filesystem;
 
@@ -89,30 +90,85 @@ public:
         std::cout << "Directory " << pathName << " deleted." << std::endl;
     }
     
-    std::string createFile(const std::string& pathName) {
+    std::map<std::string, std::string> createFile(const std::string& pathName) {
+        std::map<std::string, std::string> response;
         std::string newPath = serverPath + "/" + pathName;
         if (fs::exists(newPath)) {
             std::cerr << "Error: File already exists." << std::endl;
-            return "File already exists.";
+            response["responseCode"] = "400";
+            response["response"] = "File already exists.";
+            return response;
         }
         std::ofstream file(newPath);
         file.close();
         std::cout << "File " << pathName << " created." << std::endl;
-        return "File created.";
+        response["responseCode"] = "200";
+        response["response"] = "File created.";
+        return response;
     }
 
-    std::string deleteFile(const std::string& pathName) {
+    std::map<std::string, std::string> deleteFile(const std::string& pathName) {
+        std::map<std::string, std::string> response;
+
         std::string newPath = serverPath + "/" + pathName;
         std::cout << newPath << std::endl;
         if (!fs::exists(newPath)) {
             std::cerr << "Error: File doesn't exist." << std::endl;
-            return "File doesn't exist.";
+            response["responseCode"] = "400";
+            response["response"] = "File doesn't exist.";
+            return response;
         }
 
         fs::remove(newPath);
         std::cout << "File " << pathName << " deleted." << std::endl;
+        response["responseCode"] = "200";
+        response["response"] = "File deleted.";
+        return response;
+    }
 
-        return "File deleted.";
+    std::map<std::string, std::string> readFile(const std::string& pathName, int offset, int length) {
+        std::map<std::string, std::string> response;
+
+        std::string newPath = serverPath + "/" + pathName;
+        if (!fs::exists(newPath)) {
+            std::cerr << "Error: File doesn't exist." << std::endl;
+            response["responseCode"] = "400";
+            response["response"] = "File doesn't exist.";
+            return response;
+        }
+
+        std::ifstream file(newPath);
+        if (!file.is_open()) {
+            std::cerr << "Error: Could not open file." << std::endl;
+            response["responseCode"] = "400";
+            response["response"] = "Could not open file.";
+            return response;
+        }
+
+        // if offset exceeds length of file
+        file.seekg(0, std::ios::end);
+        int fileLength = file.tellg();
+        if (offset > fileLength) {
+            std::cerr << "Error: Offset exceeds length of file." << std::endl;
+            response["responseCode"] = "400";
+            response["response"] = "Offset exceeds length of file.";
+            return response;
+        }
+
+        // if offset + length exceeds length of file, read until end of file
+        if (offset + length > fileLength) {
+            length = fileLength - offset;
+        }
+
+        file.seekg(offset);
+        char* buffer = new char[length];
+        file.read(buffer, length);
+        std::cout << "File " << pathName << " content: " << buffer << std::endl;
+        file.close();
+
+        response["responseCode"] = "200";
+        response["response"] = buffer;
+        return response;
     }
 
     void duplicateFile(const std::string& oldPath, const std::string& newPath) {
@@ -162,39 +218,6 @@ public:
         file.write(remainingContent.c_str(), remainingContent.size());
         file.close();
         std::cout << "File " << pathName << " edited." << std::endl;
-    }
-
-    void readFile(const std::string& pathName, int offset, int length) {
-        std::string newPath = serverPath + "/" + pathName;
-        if (!fs::exists(newPath)) {
-            std::cerr << "Error: File doesn't exist." << std::endl;
-            return;
-        }
-
-        std::ifstream file(newPath);
-        if (!file.is_open()) {
-            std::cerr << "Error: Could not open file." << std::endl;
-            return;
-        }
-
-        // if offset exceeds length of file
-        file.seekg(0, std::ios::end);
-        int fileLength = file.tellg();
-        if (offset > fileLength) {
-            std::cerr << "Error: Offset exceeds length of file." << std::endl;
-            return;
-        }
-
-        // if offset + length exceeds length of file, read until end of file
-        if (offset + length > fileLength) {
-            length = fileLength - offset;
-        }
-
-        file.seekg(offset);
-        char* buffer = new char[length];
-        file.read(buffer, length);
-        std::cout << "File " << pathName << " content: " << buffer << std::endl;
-        file.close();
     }
 
     private:

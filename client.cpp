@@ -118,6 +118,21 @@ private:
         sendRequest(requestBody);
     }
 
+    void handleReadFile() {
+        std::string pathName;
+        getUserInput("Enter the path name of the file you would like to read: ", pathName);
+        std::string offset;
+        getUserInput("Enter the offset from which you would like to read: ", offset);
+        std::string length;
+        getUserInput("Enter the length which you would like to read: ", length);
+        std::map<std::string, std::string> requestBody;
+        requestBody["operation"] = "read";
+        requestBody["pathName"] = pathName;
+        requestBody["offset"] = offset;
+        requestBody["length"] = length;
+        sendRequest(requestBody);
+    }
+
     void sendRequest(std::map<std::string, std::string> body) { // TODO: track increasing request/ reply ID
         Message request;
         request.setVariables(0, 1, body);
@@ -137,8 +152,16 @@ private:
         // Unmarshal response
         Message response;
         response.unmarshal(std::vector<uint8_t>(buffer, buffer + bytesReceived));
-        std::cout << "Result: " << response.bodyAttributes.attributes["response"]  << std::endl;
-        return;
+
+        // if successful, print result
+        if (response.bodyAttributes.attributes["responseCode"] == "200") {
+            std::cout << "Success! " << response.bodyAttributes.attributes["response"]  << std::endl;
+            return;
+        }
+        else {
+            std::cerr << "Error: " << response.bodyAttributes.attributes["response"]  << std::endl;
+            return;
+        }
     }
 
     void handleUserInput(char* input) {
@@ -170,25 +193,26 @@ private:
         }
         else if (strcmp(input, "delete") == 0) {
             handleDeleteFile();
+        } 
+        else if (strcmp(input, "read") == 0) {
+            handleReadFile();
         }
         // if (strcmp(input, "view", 4) == 0) {
         //     handleView();
         // }
-        // if (strcmp(input, "createdir", 9) == 0) {
-        //     handleCreateDir(input);
+        // if (strcmp(input, "createdir") == 0) {
+        //     handleCreateDir();
         // }
-        // if (strcmp(input, "deletedir", 9) == 0) {
-        //     handleDeleteDir(input);
-        // }
-        // if (strcmp(input, "read", 4) == 0) {
-        //     handleReadFile(input);
-        // }
-        // if (strcmp(input, "insert", 6) == 0) {
-        //     handleInsertFile(input);
+        // if (strcmp(input, "deletedir") == 0) {
+        //     handleDeleteDir();
         // }
 
-        // if (strcmp(input, "duplicate", 9) == 0) {
-        //     handleDuplicateFile(input);
+        // if (strcmp(input, "insert") == 0) {
+        //     handleInsertFile();
+        // }
+
+        // if (strcmp(input, "duplicate") == 0) {
+        //     handleDuplicateFile();
         // }
         else std::cout << "Invalid command. Type 'help' for a list of commands\n";   
 
