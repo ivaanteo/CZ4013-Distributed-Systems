@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Check if the ServerDirectory directory exists
+if [ ! -d "ServerDirectory" ]; then
+    mkdir ServerDirectory
+fi
+
 # Check if the port number is provided
 if [ $# -ne 1 ]; then
     echo "Usage: $0 <port_number>"
