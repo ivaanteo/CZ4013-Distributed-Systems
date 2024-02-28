@@ -9,7 +9,7 @@
 
 namespace fs = std::filesystem;
 
-class FileManager {
+class FileManager { // TODO: error handling
 public:
     FileManager(const std::string& serverPath): serverPath(serverPath) {}
 
@@ -130,7 +130,6 @@ public:
         std::map<std::string, std::string> response;
 
         std::string newPath = serverPath + "/" + pathName;
-        std::cout << newPath << std::endl;
         if (!fs::exists(newPath)) {
             std::cerr << "Error: File doesn't exist." << std::endl;
             response["responseCode"] = "400";
@@ -145,8 +144,20 @@ public:
         return response;
     }
 
-    std::map<std::string, std::string> readFile(const std::string& pathName, int offset, int length) {
+    std::map<std::string, std::string> readFile(const std::string& pathName, std::string offsetStr, std::string lengthStr) {
         std::map<std::string, std::string> response;
+
+        // if offset or length is not a number, return error
+        if (!std::all_of(offsetStr.begin(), offsetStr.end(), ::isdigit) || !std::all_of(lengthStr.begin(), lengthStr.end(), ::isdigit)) {
+            std::cerr << "Error: Offset or length is not a number." << std::endl;
+            response["responseCode"] = "400";
+            response["response"] = "Offset or length is not a number.";
+            return response;
+        }
+
+        // convert offset and length to int
+        int offset = std::stoi(offsetStr);
+        int length = std::stoi(lengthStr);
 
         std::string newPath = serverPath + "/" + pathName;
         if (!fs::exists(newPath)) {
@@ -191,8 +202,19 @@ public:
         return response;
     }
 
-    std::map<std::string, std::string> editFile(const std::string& pathName, int offset, const std::string& content) {
+    std::map<std::string, std::string> editFile(const std::string& pathName, std::string offsetStr, const std::string& content) {
         std::map<std::string, std::string> response;
+        // if offset or length is not a number, return error
+        if (!std::all_of(offsetStr.begin(), offsetStr.end(), ::isdigit)) {
+            std::cerr << "Error: Offset is not a number." << std::endl;
+            response["responseCode"] = "400";
+            response["response"] = "Offset is not a number.";
+            return response;
+        }
+
+        // convert offset and length to int
+        int offset = std::stoi(offsetStr);
+
         std::string newPath = serverPath + "/" + pathName;
         if (!fs::exists(newPath)) {
             std::cerr << "Error: File doesn't exist." << std::endl;

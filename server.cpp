@@ -30,7 +30,6 @@ public:
 
         fileManager = new FileManager(directoryPath);
         std::cout << "File Manager created" << std::endl;
-        std::cout << "Current Directory: " << serverPath << std::endl;
         fileManager->clearDirectory();
         fileManager->viewDirectory();
     }
@@ -192,7 +191,7 @@ private:
         std::string pathName = attributes["pathName"];
         std::string offset = attributes["offset"];
         std::string length = attributes["length"];
-        std::map<std::string, std::string> reply = fileManager->readFile(pathName, std::stoi(offset), std::stoi(length));
+        std::map<std::string, std::string> reply = fileManager->readFile(pathName, offset, length);
         sendReply(reply);
     }
 
@@ -200,7 +199,7 @@ private:
         std::string pathName = attributes["pathName"];
         std::string offset = attributes["offset"];
         std::string content = attributes["content"];
-        std::map<std::string, std::string> reply = fileManager->editFile(pathName, std::stoi(offset), content);
+        std::map<std::string, std::string> reply = fileManager->editFile(pathName, offset, content);
         sendReply(reply);
     }
 
