@@ -54,6 +54,7 @@ public:
             exit(1);
         }
     }
+    
     ssize_t send(const void* buffer, size_t length, int flags, const sockaddr* destAddr, socklen_t destAddrLen) {
         ssize_t bytesSent = sendto(m_socket, buffer, length, flags, destAddr, destAddrLen);
         if (bytesSent == -1) {

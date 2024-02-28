@@ -167,6 +167,7 @@ private:
     }
 
     void sendRequest(std::map<std::string, std::string> body) { // TODO: track increasing request/ reply ID
+        body["port"] = std::to_string(8081);
         Message request;
         request.setVariables(0, 1, body);
         std::vector<uint8_t> marshalledData = request.marshal();
@@ -242,19 +243,17 @@ private:
         }
         else if (strcmp(input, "insert") == 0) {
             handleInsertFile();
-        } else if (strcmp(input, "createdir") == 0) {
+        } 
+        else if (strcmp(input, "createdir") == 0) {
             handleCreateDir();
-        } else if (strcmp(input, "deletedir") == 0) {
+        } 
+        else if (strcmp(input, "deletedir") == 0) {
             handleDeleteDir();
-        } else if (strcmp(input, "view") == 0) {
+        } 
+        else if (strcmp(input, "view") == 0) {
             handleView();
         }
         else std::cout << "Invalid command. Type 'help' for a list of commands\n";   
-
-        
-
-        
-        
     }
     
 };

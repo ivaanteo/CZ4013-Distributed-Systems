@@ -42,6 +42,7 @@ public:
             // Reset buffer
             memset(buffer, 0, sizeof(buffer));
             ssize_t bytesReceived = serverSocket->recv(buffer, sizeof(buffer), 0, (sockaddr*)&clientAddr, &clientAddrSize);
+
             // if bytesReceived > 0, handle request
             if (bytesReceived > 0) {
                 handleRequest(bytesReceived);
@@ -101,7 +102,6 @@ private:
         reply.setVariables(1, 1, body);
         std::vector<uint8_t> marshalledData = reply.marshal();
 
-        clientAddr.sin_port = htons(8081); // set client port
         serverSocket->send(marshalledData.data(), marshalledData.size(), 0, (sockaddr*)&clientAddr, sizeof(clientAddr));
     }
 
@@ -135,6 +135,9 @@ private:
         Message receivedRequest = receiveAndUnmarshallRequest(bytesReceived);
 
         std::map<std::string, std::string> attributes = receivedRequest.bodyAttributes.attributes;
+
+        int clientPort = std::stoi(attributes["port"]);
+        clientAddr.sin_port = htons(clientPort); // set client port
 
         std::string operation = attributes["operation"];
         std::cout << "Operation: " << operation << std::endl;
