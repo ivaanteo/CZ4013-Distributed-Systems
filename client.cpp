@@ -153,6 +153,18 @@ private:
         sendRequest(requestBody);
     }
 
+    void handleDuplicateFile() {
+        std::string pathName;
+        getUserInput("Enter the path name of the file you would like to duplicate: ", pathName);
+        std::string newPathName;
+        getUserInput("Enter the path name of the new file: ", newPathName);
+        std::map<std::string, std::string> requestBody;
+        requestBody["operation"] = "duplicate";
+        requestBody["pathName"] = pathName;
+        requestBody["newPathName"] = newPathName;
+        sendRequest(requestBody);
+    }
+
     void handleCreateDir() {
         std::string pathName;
         getUserInput("Enter the path name of the directory you would like to create: ", pathName);
@@ -249,6 +261,9 @@ private:
         else if (strcmp(input, "insert") == 0) {
             handleInsertFile();
         } 
+        else if (strcmp(input, "duplicate") == 0) {
+            handleDuplicateFile();
+        }
         else if (strcmp(input, "createdir") == 0) {
             handleCreateDir();
         } 

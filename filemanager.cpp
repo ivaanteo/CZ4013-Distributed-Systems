@@ -272,6 +272,14 @@ public:
             return response;
         }
 
+        // if new file already exists, return error
+        if (fs::exists(newFilePath)) {
+            std::cerr << "Error: New file already exists." << std::endl;
+            response["responseCode"] = "400";
+            response["response"] = "New file already exists.";
+            return response;
+        }
+
         fs::copy_file(oldFilePath, newFilePath);
         std::cout << "File " << oldPath << " duplicated to " << newPath << std::endl;
 
