@@ -14,23 +14,17 @@ make client
 make server
 ```
 
-
 ### compile both at once
+
 ```
 make all
 ```
 
 ### run:
 
--   must specify 8080 as port number as of now
 -   use different terminals
 
 ```
-./bin/server 8080
-./bin/client
-```
-
-### run both
-```
-./run.sh 8080
+./runServer.sh <serverPort>
+./runClient.sh <serverPort> <clientPort>
 ```

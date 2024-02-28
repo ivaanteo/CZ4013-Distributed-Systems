@@ -20,20 +20,17 @@ pid=$(lsof -ti :$port)
 # Check if process exists
 if [ -z "$pid" ]; then
     echo "No process found running on port $port"
+else
+    # Kill the process
+    echo "Killing process $pid running on port $port"
+    kill $pid
 fi
 
-# Kill the process
-echo "Killing process $pid running on port $port"
-kill $pid
-
 # Start the server with the provided port number in the background
-./bin/server $port &
+./bin/server $port
 
 # Capture the process ID of the server
 server_pid=$!
 
-# Run the client with the same port number
-./bin/client $port
-
-# After the client is done, kill the server
+# kill the server
 kill $server_pid

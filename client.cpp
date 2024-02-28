@@ -9,22 +9,25 @@
 #include "./utils.cpp"
 class Client {
 public:
-    Client(int port) {
+    Client(int serverPort, int clientPort) {
+        this->serverPort = serverPort;
+        this->clientPort = clientPort;
+
         // Create a socket
         clientSocket = new Socket(AF_INET, SOCK_DGRAM, 0);
 
         // Create server address
         serverAddr.sin_family = AF_INET;
         serverAddr.sin_addr.s_addr = INADDR_ANY; // Accept connections on any IP address
-        serverAddr.sin_port = htons(port); // Server port
+        serverAddr.sin_port = htons(serverPort); // Server port
 
         // Set client address and port
         clientAddr.sin_family = AF_INET;
         clientAddr.sin_addr.s_addr = INADDR_ANY; // Allow OS to assign the client IP
-        clientAddr.sin_port = htons(8081); // Set client port
+        clientAddr.sin_port = htons(clientPort); // Set client port
 
         clientSocket->bind((sockaddr*)&clientAddr, sizeof(clientAddr));
-        std::cout << "Client bound to port "<< std::endl;
+        std::cout << "Client running on port " << clientPort << std::endl;
     }
 
     void run() {
@@ -46,6 +49,8 @@ private:
     sockaddr_in clientAddr;
     sockaddr_in serverAddr;
     socklen_t serverAddrSize;
+    int clientPort;
+    int serverPort;
     
     char buffer[1024];
 
@@ -167,7 +172,7 @@ private:
     }
 
     void sendRequest(std::map<std::string, std::string> body) { // TODO: track increasing request/ reply ID
-        body["port"] = std::to_string(8081);
+        body["port"] = std::to_string(clientPort);
         Message request;
         request.setVariables(0, 1, body);
         std::vector<uint8_t> marshalledData = request.marshal();
@@ -259,15 +264,15 @@ private:
 };
 
 int main(int argc, char* argv[]) {
-
-    if (argc != 2) {
-        std::cerr << "Usage: " << argv[0] << " <port>\n";
+    if (argc != 3) {
+        std::cerr << "Usage: " << argv[0] << " <serverPort>" << " <clientPort>\n";
         exit(1);
     }
 
-    int port = std::stoi(argv[1]);
+    int serverPort = std::stoi(argv[1]);
+    int clientPort = std::stoi(argv[2]);
     
-    Client client(port);
+    Client client(serverPort, clientPort);
 
     client.run();
 
