@@ -20,6 +20,9 @@ public:
         serverAddr.sin_addr.s_addr = INADDR_ANY; // Accept connections on any IP address
         serverAddr.sin_port = htons(port); // Server port
         serverSocket->bind((sockaddr*)&serverAddr, sizeof(serverAddr));
+        
+        // BUGFIX: We need this line to initialize the clientAddrSize variable, which is used in the recvfrom function
+        clientAddrSize = sizeof(clientAddr);
 
         std::cout << "Server listening on port " << port << std::endl;
     }
@@ -129,13 +132,16 @@ private:
         // serverSocket->send(buffer, bytesReceived, 0, (sockaddr*)&clientAddr, clientAddrSize);
 
         // Receive data from client
-
         Message receivedRequest = receiveAndUnmarshallRequest(bytesReceived);
 
         std::map<std::string, std::string> attributes = receivedRequest.bodyAttributes.attributes;
 
-        int clientPort = std::stoi(attributes["port"]);
-        clientAddr.sin_port = htons(clientPort); // set client port
+        std::string clientIP = getIPAddress(clientAddr);
+        std::cout << "Client IP: " << clientIP << std::endl;
+
+        // Print port
+        int clientPort = getPort(clientAddr);
+        std::cout << "Client port: " << clientPort << std::endl;
 
         std::string operation = attributes["operation"];
         std::cout << "Operation: " << operation << std::endl;
@@ -234,8 +240,6 @@ private:
         // Retrieve attributes
         std::string pathName = attributes["pathName"];
         std::string timestamp = attributes["timestamp"];
-        std::string ipAddress = attributes["ipAddress"];
-        std::string port = attributes["port"];
 
         // Check validity of timestamp
         if (std::stoi(timestamp) < time(0)) {
@@ -268,6 +272,17 @@ private:
         sendReply(reply);
         std::cout << "Sent to client: " << message << std::endl;
     }
+
+    std::string getIPAddress(sockaddr_in clientAddr) {
+        char ip[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &(clientAddr.sin_addr), ip, INET_ADDRSTRLEN);
+        return std::string(ip);
+    }
+
+    int getPort(sockaddr_in clientAddr) {
+        return ntohs(clientAddr.sin_port);
+    }
+    
 };
 
 
