@@ -49,20 +49,6 @@ public:
             if (bytesReceived > 0) {
                 handleRequest(bytesReceived);
             }
-
-            // // Receive data from client
-            // ssize_t bytesReceived = serverSocket->recv(buffer, sizeof(buffer), 0, (sockaddr*)&clientAddr, &clientAddrSize);
-
-            // std::cout << "Received from client: " << buffer << std::endl;
-
-            // // echo to the same client
-            // ssize_t bytesSent = serverSocket->send(buffer, bytesReceived, 0, (sockaddr*)&clientAddr,  sizeof(clientAddr));
-
-            // Handle request
-            // handleRequest(bytesReceived);
-            // receiveRequest();
-
-
         }
     }
 
@@ -118,24 +104,13 @@ private:
     }
 
     void handleRequest(int bytesReceived) {
-        // Here, respond to each command
-
-        // If input is "subscribe", wait 10 seconds then send a message
-        // Retrieve first token
-        // char* token = strtok(buffer, " ");
-        // if (strcmp(token, "subscribe") == 0) {
-        //     // handleSubscribe();
-        //     return;
-        // }
-
-        // // Send data to client
-        // serverSocket->send(buffer, bytesReceived, 0, (sockaddr*)&clientAddr, clientAddrSize);
 
         // Receive data from client
         Message receivedRequest = receiveAndUnmarshallRequest(bytesReceived);
 
         std::map<std::string, std::string> attributes = receivedRequest.bodyAttributes.attributes;
 
+        // Print IP
         std::string clientIP = getIPAddress(clientAddr);
         std::cout << "Client IP: " << clientIP << std::endl;
 

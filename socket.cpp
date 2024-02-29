@@ -46,14 +46,6 @@ public:
             exit(1);
         }
     }
-
-    void listen(int backlog) {
-        if (::listen(m_socket, backlog) == -1) {
-            std::cerr << "Error: Could not listen on socket\n";
-            close(m_socket);
-            exit(1);
-        }
-    }
     
     ssize_t send(const void* buffer, size_t length, int flags, const sockaddr* destAddr, socklen_t destAddrLen) {
         ssize_t bytesSent = sendto(m_socket, buffer, length, flags, destAddr, destAddrLen);
@@ -71,24 +63,6 @@ public:
             throw std::runtime_error("Receive error");
         }
         return bytesReceived;
-    }
-
-    // Get IP address
-    std::string getIP() {
-        sockaddr_in address;
-        socklen_t addressSize = sizeof(address);
-        getsockname(m_socket, (sockaddr*)&address, &addressSize);
-        char ip[INET_ADDRSTRLEN];
-        inet_ntop(AF_INET, &address.sin_addr, ip, INET_ADDRSTRLEN);
-        return ip;
-    }
-
-    // Get port
-    int getPort() {
-        sockaddr_in address;
-        socklen_t addressSize = sizeof(address);
-        getsockname(m_socket, (sockaddr*)&address, &addressSize);
-        return ntohs(address.sin_port);
     }
     
 private:

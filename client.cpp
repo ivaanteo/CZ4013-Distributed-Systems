@@ -70,16 +70,11 @@ private:
         getUserInput("Enter the duration you would like to subscribe for (in seconds): ", duration);
         std::string timestamp = std::to_string(time(0) + std::stoi(duration));
 
-        std::string ipAddress = clientSocket->getIP();
-        std::string port = std::to_string(clientSocket->getPort());
-
         // Send subscribe message to server
         std::map<std::string, std::string> requestBody;
         requestBody["operation"] = "subscribe";
         requestBody["pathName"] = pathName;
         requestBody["timestamp"] = timestamp;
-        requestBody["ipAddress"] = ipAddress;
-        requestBody["port"] = port;
         sendRequest(requestBody);
         // Repeatedly receive updates from server
 
