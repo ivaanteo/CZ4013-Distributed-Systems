@@ -96,7 +96,6 @@ private:
         Message response = unmarshalResponse(bytesReceived);
 
         if (response.bodyAttributes.attributes["responseCode"] == "200") {
-            std::cout << "Subscribed successfully. Listening for updates...\n";
             // If successful, listen until timestamp
             listenForUpdates(response);
         }
