@@ -51,6 +51,7 @@ private:
     socklen_t serverAddrSize;
     int clientPort;
     int serverPort;
+    Message request;
     
     char buffer[1024];
 
@@ -59,6 +60,20 @@ private:
     void getUserInput(std::string message, std::string& input) {
         std::cout << message << std::endl;
         std::getline(std::cin, input);
+    }
+    
+    void listenForUpdates(Message response) {
+        int bytesReceived;
+        while (response.bodyAttributes.attributes["responseCode"] == "200") {
+            bytesReceived = receiveResponse();
+            response = unmarshalResponse(bytesReceived);
+            
+            // If subscription terminated, break
+            if (response.bodyAttributes.attributes["response"] == "Subscription terminated!") {
+                std::cout << "Unsubscribing...\n";
+                break;
+            }
+        }
     }
 
     void handleSubscribe() {
@@ -77,25 +92,18 @@ private:
         requestBody["timestamp"] = timestamp;
         sendRequest(requestBody);
         // Repeatedly receive updates from server
+        ssize_t bytesReceived = receiveResponse();
+        Message response = unmarshalResponse(bytesReceived);
 
-        receiveResponse();
+        if (response.bodyAttributes.attributes["responseCode"] == "200") {
+            std::cout << "Subscribed successfully. Listening for updates...\n";
+            // If successful, listen until timestamp
+            listenForUpdates(response);
+        }
+        else {
+            std::cerr << "Error: " << response.bodyAttributes.attributes["response"]  << std::endl;
+        }
 
-
-        // std::string request = "subscribe " + fileName + " " + timestamp + " " + ipAddress + " " + port;
-        // std::map<std::string, std::string> requestBody;
-        // requestBody["msg"] = request;
-        // sendRequest(requestBody);
-
-
-        // // Receive response on whether subscription was successful
-        // clientSocket->recv(buffer, sizeof(buffer), 0);
-
-        // memset(buffer, 0, sizeof(buffer)); // Temporarily clear buffer
-
-        // If successful, wait for updates
-
-
-        // Unsubscribe after duration
         
     }
 
@@ -107,6 +115,8 @@ private:
         requestBody["operation"] = "create";
         requestBody["pathName"] = pathName;
         sendRequest(requestBody);
+        ssize_t bytesReceived = receiveResponse();
+        Message _ = unmarshalResponse(bytesReceived);
     }
 
     void handleDeleteFile() {
@@ -116,6 +126,8 @@ private:
         requestBody["operation"] = "delete";
         requestBody["pathName"] = pathName;
         sendRequest(requestBody);
+        ssize_t bytesReceived = receiveResponse();
+        Message _ = unmarshalResponse(bytesReceived);
     }
 
     void handleReadFile() {
@@ -131,6 +143,8 @@ private:
         requestBody["offset"] = offset;
         requestBody["length"] = length;
         sendRequest(requestBody);
+        ssize_t bytesReceived = receiveResponse();
+        Message _ = unmarshalResponse(bytesReceived);
     }
 
     void handleInsertFile() {
@@ -146,6 +160,8 @@ private:
         requestBody["offset"] = offset;
         requestBody["content"] = content;
         sendRequest(requestBody);
+        ssize_t bytesReceived = receiveResponse();
+        Message _ = unmarshalResponse(bytesReceived);
     }
 
     void handleDuplicateFile() {
@@ -158,6 +174,8 @@ private:
         requestBody["pathName"] = pathName;
         requestBody["newPathName"] = newPathName;
         sendRequest(requestBody);
+        ssize_t bytesReceived = receiveResponse();
+        Message _ = unmarshalResponse(bytesReceived);
     }
 
     void handleCreateDir() {
@@ -167,6 +185,8 @@ private:
         requestBody["operation"] = "createdir";
         requestBody["pathName"] = pathName;
         sendRequest(requestBody);
+        ssize_t bytesReceived = receiveResponse();
+        Message _ = unmarshalResponse(bytesReceived);
     }
 
     void handleDeleteDir() {
@@ -176,6 +196,8 @@ private:
         requestBody["operation"] = "deletedir";
         requestBody["pathName"] = pathName;
         sendRequest(requestBody);
+        ssize_t bytesReceived = receiveResponse();
+        Message _ = unmarshalResponse(bytesReceived);
     }
 
     void sendRequest(std::map<std::string, std::string> body) { // TODO: track increasing request/ reply ID
@@ -184,22 +206,26 @@ private:
         request.setVariables(0, 1, body);
         std::vector<uint8_t> marshalledData = request.marshal();
         clientSocket->send(marshalledData.data(), marshalledData.size(), 0, (sockaddr*)&serverAddr, sizeof(serverAddr));
-        receiveResponse();
     }
 
     void handleView() {
         std::map<std::string, std::string> requestBody;
         requestBody["operation"] = "view";
         sendRequest(requestBody);
+        ssize_t bytesReceived = receiveResponse();
+        Message _ = unmarshalResponse(bytesReceived);
     }
 
-    void receiveResponse() {
+    ssize_t receiveResponse() {
         ssize_t bytesReceived = clientSocket->recv(buffer, sizeof(buffer), 0, (sockaddr*)&serverAddr, &serverAddrSize);
         if (bytesReceived == -1) {
             perror("Error: Could not receive data from server\n");
-            return;
+            return -1;
         }
+        return bytesReceived;
+    }
 
+    Message unmarshalResponse(ssize_t bytesReceived) {
         // Unmarshal response
         Message response;
         response.unmarshal(std::vector<uint8_t>(buffer, buffer + bytesReceived));
@@ -207,11 +233,11 @@ private:
         // if successful, print result
         if (response.bodyAttributes.attributes["responseCode"] == "200") {
             std::cout << "Success! " << response.bodyAttributes.attributes["response"]  << std::endl;
-            return;
+            return response;
         }
         else {
             std::cerr << "Error: " << response.bodyAttributes.attributes["response"]  << std::endl;
-            return;
+            return response;
         }
     }
 

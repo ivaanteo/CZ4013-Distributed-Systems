@@ -8,6 +8,7 @@
 #include "./utils.cpp"
 #include <map>
 #include <string>
+#include <thread>
 
 class Server {
 public:
@@ -67,7 +68,7 @@ private:
 
     char buffer[1024];
     // Subscriptions -- Filename : [Pair(timestamp, IP Address:Port), ...]
-    // std::unordered_map<std::string, std::vector<std::pair<int, std::string>>> subscriptions;
+    std::unordered_map<std::string, std::vector<std::pair<int, std::string>>> subscriptions;
 
     // Server helper functions
     // Handle request
@@ -85,6 +86,22 @@ private:
     }
 
     void sendReply(std::map<std::string, std::string> body) { // TODO: track reply ID
+        Message reply;
+        reply.setVariables(1, 1, body);
+        std::vector<uint8_t> marshalledData = reply.marshal();
+
+        serverSocket->send(marshalledData.data(), marshalledData.size(), 0, (sockaddr*)&clientAddr, sizeof(clientAddr));
+    }
+
+    sockaddr_in getClientAddrFromIPAndPort(std::string ipAddress, int port) {
+        sockaddr_in clientAddr;
+        clientAddr.sin_family = AF_INET;
+        clientAddr.sin_addr.s_addr = inet_addr(ipAddress.c_str());
+        clientAddr.sin_port = htons(port);
+        return clientAddr;
+    }
+
+    void sendTo(std::map<std::string, std::string> body, sockaddr_in clientAddr) { // TODO: track reply ID
         Message reply;
         reply.setVariables(1, 1, body);
         std::vector<uint8_t> marshalledData = reply.marshal();
@@ -165,6 +182,7 @@ private:
     void handleDelete(std::map<std::string, std::string> attributes) {
         std::string pathName = attributes["pathName"];
         std::map<std::string, std::string> reply = fileManager->deleteFile(pathName);
+        publishUpdates();
         sendReply(reply);
     }
 
@@ -181,6 +199,7 @@ private:
         std::string offset = attributes["offset"];
         std::string content = attributes["content"];
         std::map<std::string, std::string> reply = fileManager->editFile(pathName, offset, content);
+        publishUpdates();
         sendReply(reply);
     }
 
@@ -223,30 +242,90 @@ private:
         }
 
         // Check validaity of file name
-        if (pathName != "file1" && pathName != "file2") {
+        if (!fileManager->fileExists(pathName)) {
             std::cerr << "Error: Invalid path name" << std::endl;
             return;
         }
 
+        // Get client IP address and port
+        std::string ipAddress = getIPAddress(clientAddr);
+        int port = getPort(clientAddr);
+
         // // Check if file is already subscribed by the client
-        // for (auto subscription : subscriptions[fileName]) {
-        //     if (subscription.second == ipAddress + ":" + port) {
-        //         std::cerr << "Error: File already subscribed" << std::endl;
-        //         return;
-        //     }
-        // }
+        for (auto subscription : subscriptions[pathName]) {
+            if (subscription.second == ipAddress + ":" + std::to_string(port)) {
+                std::cerr << "Error: File already subscribed" << std::endl;
+                return;
+            }
+        }
 
         // Save the subscription
-        // subscriptions[fileName].push_back(std::make_pair(std::stoi(timestamp), ipAddress + ":" + port));
-
+        subscriptions[pathName].push_back(std::make_pair(std::stoi(timestamp), ipAddress + ":" + std::to_string(port)));
+        
         // Send message to client
         const char* message = "You are now subscribed!"; // Simulate updated data
         
         AttributeMap reply;
         reply["response"] = message;
+        reply["responseCode"] = "200";
         sendReply(reply);
         std::cout << "Sent to client: " << message << std::endl;
+
+
+        // Send unsubscription message to client on timestamp
+        std::thread unsubscribeThread([this, pathName, timestamp, ipAddress, port] {
+            // Copy ip address and port
+            std::string ipAddressCopy = ipAddress;
+            int portCopy = port;
+            std::this_thread::sleep_for(std::chrono::seconds(std::stoi(timestamp) - time(0)));
+            std::cout << "Unsubscribing..." << std::endl;
+            // Send message to client
+            const char* message = "Subscription terminated!"; // Simulate updated data
+            AttributeMap reply;
+            reply["response"] = message;
+            reply["responseCode"] = "200";
+            // Send timestamp of 1 second ago
+            // reply["timestamp"] = std::to_string(time(0) - 1);
+
+            // Send to
+            sendTo(reply, getClientAddrFromIPAndPort(ipAddressCopy, portCopy));
+
+            std::cout << "Sent to client: " << message << std::endl;
+            // Remove subscription
+            subscriptions[pathName].erase(std::remove(subscriptions[pathName].begin(), subscriptions[pathName].end(), std::make_pair(std::stoi(timestamp), ipAddress + ":" + std::to_string(port))), subscriptions[pathName].end());
+        });
+
+        unsubscribeThread.detach();
     }
+
+    void publishUpdates() {
+        // Iterate through subscriptions
+        // If the current time is greater than the timestamp, 
+        // send a message to the client to terminate the subscription
+        
+        for (auto& subscription : subscriptions) {
+            std::string pathName = subscription.first;
+            for (auto& client : subscription.second) {
+                
+                // Send message to client
+                std::string message = "Received new content: \n" + fileManager->getFileContents(pathName);
+                AttributeMap reply;
+                reply["response"] = &message[0];
+                reply["responseCode"] = "200";
+
+                // Split IP address and port
+                std::string ipAddress = client.second.substr(0, client.second.find(":"));
+                int port = std::stoi(client.second.substr(client.second.find(":") + 1));
+
+                // Send to
+                sendTo(reply, getClientAddrFromIPAndPort(ipAddress, port));
+                std::cout << "Sent to client: " << message << std::endl;
+
+            }
+        }
+    }
+
+    // Helpers
 
     std::string getIPAddress(sockaddr_in clientAddr) {
         char ip[INET_ADDRSTRLEN];
@@ -268,7 +347,8 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    int port = atoi(argv[1]);
+    int port = atoi(argv[1]);    
+    // Run server on a separate thread
     Server server(port);
     server.run();
 

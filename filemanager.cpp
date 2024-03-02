@@ -143,7 +143,8 @@ public:
         response["response"] = "File deleted.";
         return response;
     }
-
+    
+    // Read file. If length == -1, read until end of file
     std::map<std::string, std::string> readFile(const std::string& pathName, std::string offsetStr, std::string lengthStr) {
         std::map<std::string, std::string> response;
 
@@ -186,7 +187,7 @@ public:
         }
 
         // if offset + length exceeds length of file, read until end of file
-        if (offset + length > fileLength) {
+        if (offset + length > fileLength or length == -1) {
             length = fileLength - offset;
         }
 
@@ -286,6 +287,20 @@ public:
         response["responseCode"] = "200";
         response["response"] = "File duplicated.";
         return response;
+    }
+
+    // File exists
+    bool fileExists(const std::string& pathName) {
+        std::string newPath = serverPath + "/" + pathName;
+        return fs::exists(newPath);
+    }
+
+    // Retrieve file contents as a string
+    std::string getFileContents(const std::string& pathName) {
+        std::string newPath = serverPath + "/" + pathName;
+        std::ifstream file(newPath);
+        std::string content((std::istreambuf_iterator<char>(file)), (std::istreambuf_iterator<char>()));
+        return content;
     }
 
 
