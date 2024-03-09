@@ -99,11 +99,6 @@ private:
             // If successful, listen until timestamp
             listenForUpdates(response);
         }
-        else {
-            std::cerr << "Error: " << response.bodyAttributes.attributes["response"]  << std::endl;
-        }
-
-        
     }
 
 

@@ -93,6 +93,13 @@ private:
         serverSocket->send(marshalledData.data(), marshalledData.size(), 0, (sockaddr*)&clientAddr, sizeof(clientAddr));
     }
 
+    void sendErrorReply(std::string message) {
+        std::map<std::string, std::string> body;
+        body["response"] = message;
+        body["responseCode"] = "400";
+        sendReply(body);
+    }
+
     sockaddr_in getClientAddrFromIPAndPort(std::string ipAddress, int port) {
         sockaddr_in clientAddr;
         clientAddr.sin_family = AF_INET;
@@ -238,12 +245,14 @@ private:
         // Check validity of timestamp
         if (std::stoi(timestamp) < time(0)) {
             std::cerr << "Error: Invalid timestamp" << std::endl;
+            sendErrorReply("Invalid timestamp");
             return;
         }
 
         // Check validaity of file name
         if (!fileManager->fileExists(pathName)) {
             std::cerr << "Error: Invalid path name" << std::endl;
+            sendErrorReply("Invalid path name");
             return;
         }
 
@@ -251,10 +260,11 @@ private:
         std::string ipAddress = getIPAddress(clientAddr);
         int port = getPort(clientAddr);
 
-        // // Check if file is already subscribed by the client
+        // Check if file is already subscribed by the client
         for (auto subscription : subscriptions[pathName]) {
             if (subscription.second == ipAddress + ":" + std::to_string(port)) {
                 std::cerr << "Error: File already subscribed" << std::endl;
+                sendErrorReply("File already subscribed");
                 return;
             }
         }
