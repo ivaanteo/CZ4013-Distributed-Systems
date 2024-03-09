@@ -101,10 +101,14 @@ private:
         }
     }
 
-
     void handleCreateFile() {
         std::string pathName;
         getUserInput("Enter the path name of the file you would like to create: ", pathName);
+        // exit if user enters exit
+        if (pathName == "return") {
+            std::cout << "Returning...\n";
+            return;
+        }
         std::map<std::string, std::string> requestBody;
         requestBody["operation"] = "create";
         requestBody["pathName"] = pathName;

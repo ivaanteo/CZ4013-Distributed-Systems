@@ -17,6 +17,6 @@ make all
 -   use different terminals
 
 ```
-./runServer.sh <serverPort>
+./runServer.sh <serverPort> <invocation type: 0 for at-least-once, 1 for at-most-once>
 ./runClient.sh <serverPort> <clientPort>
 ```

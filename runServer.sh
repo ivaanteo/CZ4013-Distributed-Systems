@@ -6,13 +6,14 @@ if [ ! -d "ServerDirectory" ]; then
 fi
 
 # Check if the port number is provided
-if [ $# -ne 1 ]; then
-    echo "Usage: $0 <port_number>"
+if [ $# -ne 2 ]; then
+    echo "Usage: $0 <port_number> <invocation type: 0 for at-least-once, 1 for at-most-once>"
     exit 1
 fi
 
 # Port number provided as argument
 port=$1
+invocation_type=$2
 
 # Find the PID using lsof
 pid=$(lsof -ti :$port)
@@ -27,7 +28,7 @@ else
 fi
 
 # Start the server with the provided port number in the background
-./bin/server $port
+./bin/server $port $invocation_type
 
 # Capture the process ID of the server
 server_pid=$!

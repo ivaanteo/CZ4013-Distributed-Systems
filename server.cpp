@@ -7,12 +7,15 @@
 #include "./filemanager.cpp"
 #include "./utils.cpp"
 #include <map>
+#include <unordered_map>
 #include <string>
+#include <vector>
 #include <thread>
 
 class Server {
 public:
-    Server(int port) {
+    Server(int port, int invocationType) {
+        this->invocationType = invocationType;
         // Create a socket
         serverSocket = new Socket(AF_INET, SOCK_DGRAM, 0);
         
@@ -65,6 +68,10 @@ private:
     socklen_t clientAddrSize;
     int clientSocketDescriptor;
     FileManager* fileManager;
+    int invocationType;
+    // map to store requests (clientAddress, clientPort, receivedData) and their corresponding responses
+    // std::unordered_map<std::pair<std::string, std::string>, 
+    // std::unordered_map<std::pair<std::string, std::string>, std::unordered_map<std::vector<uint8_t>, std::vector<uint8_t>>> requestResponseMap;
 
     char buffer[1024];
     // Subscriptions -- Filename : [Pair(timestamp, IP Address:Port), ...]
@@ -73,11 +80,7 @@ private:
     // Server helper functions
     // Handle request
 
-    Message receiveAndUnmarshallRequest(int bytesReceived) {
-        // Unmarshal request
-        std::vector<uint8_t> receivedData(buffer, buffer + bytesReceived);
-
-
+    Message receiveAndUnmarshallRequest(std::vector<uint8_t> receivedData) {
         // Create a Message object and unmarshal the received data
         Message receivedRequest;
         receivedRequest.unmarshal(receivedData);
@@ -89,7 +92,10 @@ private:
         Message reply;
         reply.setVariables(1, 1, body);
         std::vector<uint8_t> marshalledData = reply.marshal();
-
+        // record request and response in map
+        // std::pair<std::string, std::string> clientAddress = std::make_pair(inet_ntoa(clientAddr.sin_addr), std::to_string(ntohs(clientAddr.sin_port)));
+        // requestResponseMap[clientAddress][marshalledData] = marshalledData;
+        
         serverSocket->send(marshalledData.data(), marshalledData.size(), 0, (sockaddr*)&clientAddr, sizeof(clientAddr));
     }
 
@@ -130,8 +136,8 @@ private:
     void handleRequest(int bytesReceived) {
 
         // Receive data from client
-        Message receivedRequest = receiveAndUnmarshallRequest(bytesReceived);
-
+        std::vector<uint8_t> receivedData(buffer, buffer + bytesReceived);        
+        Message receivedRequest = receiveAndUnmarshallRequest(receivedData);
         std::map<std::string, std::string> attributes = receivedRequest.bodyAttributes.attributes;
 
         // Print IP
@@ -142,6 +148,17 @@ private:
         int clientPort = getPort(clientAddr);
         std::cout << "Client port: " << clientPort << std::endl;
 
+        // if invocation type == 1, check if request has been received before. if it has been received before, retransmit reply
+        // if (invocationType == 1) {
+        //     std::pair<std::string, std::string> clientAddress = std::make_pair(inet_ntoa(clientAddr.sin_addr), std::to_string(clientPort));
+        //     if (requestResponseMap.find(clientAddress) != requestResponseMap.end()) {
+        //         if (requestResponseMap[clientAddress].find(receivedData) != requestResponseMap[clientAddress].end()) {
+        //             std::vector<uint8_t> pastResponse = requestResponseMap[clientAddress][receivedData];
+        //             serverSocket->send(pastResponse.data(), pastResponse.size(), 0, (sockaddr*)&clientAddr, sizeof(clientAddr));
+        //             return;
+        //         }
+        //     }
+        // }
         std::string operation = attributes["operation"];
         std::cout << "Operation: " << operation << std::endl;
         if (operation == "subscribe") {
@@ -352,14 +369,16 @@ private:
 
 int main(int argc, char* argv[]) {
     
-    if (argc != 2) {
+    if (argc != 3) {
         std::cerr << "Usage: " << argv[0] << " <port>" << std::endl;
         return 1;
     }
 
     int port = atoi(argv[1]);    
     // Run server on a separate thread
-    Server server(port);
+    int invocationType = atoi(argv[2]);
+
+    Server server(port, invocationType);
     server.run();
 
     return 0;
