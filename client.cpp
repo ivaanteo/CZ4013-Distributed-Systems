@@ -52,6 +52,7 @@ private:
     int clientPort;
     int serverPort;
     Message request;
+    int requestId = 0;
     
     char buffer[1024];
 
@@ -198,10 +199,11 @@ private:
         Message _ = unmarshalResponse(bytesReceived);
     }
 
-    void sendRequest(std::map<std::string, std::string> body) { // TODO: track increasing request/ reply ID
+    void sendRequest(std::map<std::string, std::string> body) {
         body["port"] = std::to_string(clientPort);
         Message request;
-        request.setVariables(0, 1, body);
+        request.setVariables(0, requestId, body);
+        std::cout << requestId << std::endl;
         std::vector<uint8_t> marshalledData = request.marshal();
         clientSocket->send(marshalledData.data(), marshalledData.size(), 0, (sockaddr*)&serverAddr, sizeof(serverAddr));
     }
