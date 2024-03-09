@@ -204,6 +204,7 @@ private:
         Message request;
         request.setVariables(0, requestId, body);
         std::cout << requestId << std::endl;
+        requestId++;
         std::vector<uint8_t> marshalledData = request.marshal();
         clientSocket->send(marshalledData.data(), marshalledData.size(), 0, (sockaddr*)&serverAddr, sizeof(serverAddr));
     }
@@ -229,6 +230,9 @@ private:
         // Unmarshal response
         Message response;
         response.unmarshal(std::vector<uint8_t>(buffer, buffer + bytesReceived));
+        
+        std::cout << "responseId: " << response.requestId << std::endl;
+
 
         // if successful, print result
         if (response.bodyAttributes.attributes["responseCode"] == "200") {

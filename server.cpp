@@ -88,9 +88,9 @@ private:
         return receivedRequest;
     }
 
-    void sendReply(std::map<std::string, std::string> body) { // TODO: track reply ID
+    void sendReply(std::map<std::string, std::string> body, int requestId) {
         Message reply;
-        reply.setVariables(1, 1, body);
+        reply.setVariables(1, requestId, body);
         std::vector<uint8_t> marshalledData = reply.marshal();
         // record request and response in map
         // std::pair<std::string, std::string> clientAddress = std::make_pair(inet_ntoa(clientAddr.sin_addr), std::to_string(ntohs(clientAddr.sin_port)));
@@ -99,11 +99,11 @@ private:
         serverSocket->send(marshalledData.data(), marshalledData.size(), 0, (sockaddr*)&clientAddr, sizeof(clientAddr));
     }
 
-    void sendErrorReply(std::string message) {
+    void sendErrorReply(std::string message, int requestId) {
         std::map<std::string, std::string> body;
         body["response"] = message;
         body["responseCode"] = "400";
-        sendReply(body);
+        sendReply(body, requestId);
     }
 
     sockaddr_in getClientAddrFromIPAndPort(std::string ipAddress, int port) {
@@ -138,6 +138,7 @@ private:
         // Receive data from client
         std::vector<uint8_t> receivedData(buffer, buffer + bytesReceived);        
         Message receivedRequest = receiveAndUnmarshallRequest(receivedData);
+        int requestID = receivedRequest.requestId;
         std::map<std::string, std::string> attributes = receivedRequest.bodyAttributes.attributes;
 
         // Print IP
@@ -162,96 +163,96 @@ private:
         std::string operation = attributes["operation"];
         std::cout << "Operation: " << operation << std::endl;
         if (operation == "subscribe") {
-            handleSubscribe(attributes);
+            handleSubscribe(attributes, requestID);
         }
         else if (operation == "create") {
-            handleCreate(attributes);
+            handleCreate(attributes,requestID);
         }
         else if (operation == "delete") {
-            handleDelete(attributes);
+            handleDelete(attributes, requestID);
         }
         else if (operation == "read") {
-            handleRead(attributes);
+            handleRead(attributes, requestID);
         }
         else if (operation == "insert") {
-            handleInsert(attributes);
+            handleInsert(attributes, requestID);
         }
         else if (operation == "duplicate") {
-            handleDuplicate(attributes);
+            handleDuplicate(attributes, requestID);
         } 
         else if (operation == "createdir") {
-            handleCreateDir(attributes);
+            handleCreateDir(attributes, requestID);
         }
         else if (operation == "deletedir") {
-            handleDeleteDir(attributes);
+            handleDeleteDir(attributes, requestID);
         } else if (operation == "view") {
-            handleView(attributes);
+            handleView(attributes, requestID);
         }
         else {
-            handleEcho(receivedRequest);
+            handleEcho(receivedRequest, requestID);
         }
     }
 
-    void handleEcho(Message receivedRequest) {
+    void handleEcho(Message receivedRequest, int requestID) {
         // Send data to client
-        sendReply(receivedRequest.bodyAttributes.attributes);
+        sendReply(receivedRequest.bodyAttributes.attributes, requestID);
     }
 
-    void handleCreate(std::map<std::string, std::string> attributes) {
+    void handleCreate(std::map<std::string, std::string> attributes, int requestId) {
         std::string pathName = attributes["pathName"];
         std::map<std::string, std::string> reply = fileManager->createFile(pathName);
-        sendReply(reply);
+        sendReply(reply, requestId);
     }
 
-    void handleDelete(std::map<std::string, std::string> attributes) {
+    void handleDelete(std::map<std::string, std::string> attributes, int requestId) {
         std::string pathName = attributes["pathName"];
         std::map<std::string, std::string> reply = fileManager->deleteFile(pathName);
         publishUpdates();
-        sendReply(reply);
+        sendReply(reply, requestId);
     }
 
-    void handleRead(std::map<std::string, std::string> attributes) {
+    void handleRead(std::map<std::string, std::string> attributes, int requestId) {
         std::string pathName = attributes["pathName"];
         std::string offset = attributes["offset"];
         std::string length = attributes["length"];
         std::map<std::string, std::string> reply = fileManager->readFile(pathName, offset, length);
-        sendReply(reply);
+        sendReply(reply, requestId);
     }
 
-    void handleInsert(std::map<std::string, std::string> attributes) {
+    void handleInsert(std::map<std::string, std::string> attributes, int requestId) {
         std::string pathName = attributes["pathName"];
         std::string offset = attributes["offset"];
         std::string content = attributes["content"];
         std::map<std::string, std::string> reply = fileManager->editFile(pathName, offset, content);
         publishUpdates();
-        sendReply(reply);
+        sendReply(reply, requestId);
     }
 
-    void handleDuplicate(std::map<std::string, std::string> attributes) {
+    void handleDuplicate(std::map<std::string, std::string> attributes, int requestId) {
         std::string pathName = attributes["pathName"];
         std::string newPathName = attributes["newPathName"];
         std::map<std::string, std::string> reply = fileManager->duplicateFile(pathName, newPathName);
-        sendReply(reply);
+        sendReply(reply, requestId);
     }
 
-    void handleCreateDir(std::map<std::string, std::string> attributes) {
+    void handleCreateDir(std::map<std::string, std::string> attributes, int requestId) {
         std::string pathName = attributes["pathName"];
         std::map<std::string, std::string> reply = fileManager->createDirectory(pathName);
-        sendReply(reply);
+        sendReply(reply, requestId);
     }
 
-    void handleDeleteDir(std::map<std::string, std::string> attributes) {
+    void handleDeleteDir(std::map<std::string, std::string> attributes, int requestId) {
         std::string pathName = attributes["pathName"];
         std::map<std::string, std::string> reply = fileManager->deleteDirectory(pathName);
-        sendReply(reply);
+        sendReply(reply, requestId);
     }
 
-    void handleView(std::map<std::string, std::string> attributes) {
+    void handleView(std::map<std::string, std::string> attributes, int requestId) {
         std::map<std::string, std::string> reply = fileManager->viewDirectory();
-        sendReply(reply);
+        sendReply(reply, requestId);
     }
 
-    void handleSubscribe(std::map<std::string, std::string> attributes) {
+    void handleSubscribe(std::map<std::string, std::string> attributes, int requestId) {
         // Simulate waiting for data
         std::cout << "Subscribing..." << std::endl;
 
@@ -262,14 +263,14 @@ private:
         // Check validity of timestamp
         if (std::stoi(timestamp) < time(0)) {
             std::cerr << "Error: Invalid timestamp" << std::endl;
-            sendErrorReply("Invalid timestamp");
+            sendErrorReply("Invalid timestamp", requestId);
             return;
         }
 
         // Check validaity of file name
         if (!fileManager->fileExists(pathName)) {
             std::cerr << "Error: Invalid path name" << std::endl;
-            sendErrorReply("Invalid path name");
+            sendErrorReply("Invalid path name", requestId);
             return;
         }
 
@@ -281,7 +282,7 @@ private:
         for (auto subscription : subscriptions[pathName]) {
             if (subscription.second == ipAddress + ":" + std::to_string(port)) {
                 std::cerr << "Error: File already subscribed" << std::endl;
-                sendErrorReply("File already subscribed");
+                sendErrorReply("File already subscribed", requestId);
                 return;
             }
         }
@@ -295,7 +296,7 @@ private:
         AttributeMap reply;
         reply["response"] = message;
         reply["responseCode"] = "200";
-        sendReply(reply);
+        sendReply(reply, requestId);
         std::cout << "Sent to client: " << message << std::endl;
 
 
