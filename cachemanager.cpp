@@ -151,6 +151,12 @@ public:
         return false;
     }
 
+    void invalidate(const std::string& key) {
+        if (cache.find(key) != cache.end()) {
+            cache.erase(key);
+        }
+    }
+
 private:
     std::unordered_map<std::string, CacheEntry> cache;
     int freshnessInterval = 60;

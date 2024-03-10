@@ -205,6 +205,8 @@ private:
         sendRequest(requestBody);
         ssize_t bytesReceived = receiveResponse();
         Message _ = unmarshalResponse(bytesReceived);
+        // For now, we'll invalidate the cache
+        cache->invalidate(pathName);
     }
 
     void handleDuplicateFile() {
