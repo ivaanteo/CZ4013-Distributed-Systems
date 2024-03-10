@@ -203,7 +203,6 @@ private:
         body["port"] = std::to_string(clientPort);
         Message request;
         request.setVariables(0, requestId, body);
-        std::cout << requestId << std::endl;
         requestId++;
         std::vector<uint8_t> marshalledData = request.marshal();
         clientSocket->send(marshalledData.data(), marshalledData.size(), 0, (sockaddr*)&serverAddr, sizeof(serverAddr));
