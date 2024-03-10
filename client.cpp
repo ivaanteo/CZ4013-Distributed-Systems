@@ -7,6 +7,7 @@
 #include "./socket.cpp"
 #include <string>
 #include "./utils.cpp"
+#include "./cachemanager.cpp"
 class Client {
 public:
     Client(int serverPort, int clientPort) {
@@ -28,6 +29,8 @@ public:
 
         clientSocket->bind((sockaddr*)&clientAddr, sizeof(clientAddr));
         std::cout << "Client running on port " << clientPort << std::endl;
+
+        cache = new CacheManager();
     }
 
     void run() {
@@ -53,6 +56,7 @@ private:
     int serverPort;
     Message request;
     int requestId = 0;
+    CacheManager* cache;
     
     char buffer[1024];
 
@@ -136,6 +140,33 @@ private:
         getUserInput("Enter the offset from which you would like to read: ", offset);
         std::string length;
         getUserInput("Enter the length which you would like to read: ", length);
+
+        std::cout << "Checking cache...\n";
+        int start = std::stoi(offset);
+        int end = start + std::stoi(length);
+        std::cout << "Start: " << start << " End: " << end << std::endl;
+
+
+        // Check whether the range is in the cache
+        if (cache->isRangeCached(pathName, start, end)) {
+            std::cout << "In range!\n";
+            if (cache->isLastValidatedFresh(pathName, start, end)) {
+                std::cout << "Cache last validated is fresh!\n";
+                std::cout << cache->get(pathName, start, end) << std::endl;
+                return;
+            }
+            // Check whether lastModified of local copy is equivalent to server copy
+            else if (cache->isLastModifiedFresh(pathName, start, end, getLastModified(pathName))) {
+                std::cout << "Cache last modified is fresh!\n";
+                std::cout << cache->get(pathName, start, end) << std::endl;
+                return;
+            }
+        }
+        
+        // Cache miss
+        std::cout << "Cache miss!\n";
+        
+        // Refetch entire range
         std::map<std::string, std::string> requestBody;
         requestBody["operation"] = "read";
         requestBody["pathName"] = pathName;
@@ -143,7 +174,20 @@ private:
         requestBody["length"] = length;
         sendRequest(requestBody);
         ssize_t bytesReceived = receiveResponse();
-        Message _ = unmarshalResponse(bytesReceived);
+        Message response = unmarshalResponse(bytesReceived);
+        
+        std::time_t lastModified = response.bodyAttributes.attributes["lastModified"] == "" ? getLastModified(pathName) : std::stoi(response.bodyAttributes.attributes["lastModified"]);
+
+        if (response.bodyAttributes.attributes["responseCode"] == "200") {
+            std::cout << "Response: " << response.bodyAttributes.attributes["response"] << std::endl;
+            
+            // Update cache
+            cache->insert(pathName, response.bodyAttributes.attributes["response"], start, end, lastModified);
+            std::cout << response.bodyAttributes.attributes["response"] << std::endl;
+            std::cout << "Cache updated!\n";
+            // Print contents of cache
+            cache->print();
+        }
     }
 
     void handleInsertFile() {
@@ -298,6 +342,18 @@ private:
             handleView();
         }
         else std::cout << "Invalid command. Type 'help' for a list of commands\n";   
+    }
+
+    // This gets the last modified time of a file from the server to determine whether a new copy is needed
+    std::time_t getLastModified(const std::string& pathName) {
+        std::cout<< "Fetching last modified from server...\n";
+        std::map<std::string, std::string> requestBody;
+        requestBody["operation"] = "lastModified";
+        requestBody["pathName"] = pathName;
+        sendRequest(requestBody);
+        ssize_t bytesReceived = receiveResponse();
+        Message response = unmarshalResponse(bytesReceived);
+        return std::stoi(response.bodyAttributes.attributes["lastModified"]);
     }
     
 };

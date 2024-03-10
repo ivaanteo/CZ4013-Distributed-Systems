@@ -218,7 +218,8 @@ private:
             reply = handleDeleteDir(attributes);
         } else if (operation == "view") {
             reply = handleView(attributes);
-            sendReply(reply, requestID, receivedData);
+        } else if (operation == "lastModified") {
+            reply = handleLastModified(attributes);
         }
         else {
             handleEcho(receivedRequest, requestID, receivedData);
@@ -359,6 +360,13 @@ private:
         });
 
         unsubscribeThread.detach();
+    }
+
+    std::map<std::string, std::string> handleLastModified(std::map<std::string, std::string> attributes) {
+        std::string pathName = attributes["pathName"];
+        std::time_t lastModified = fileManager->getLastModifiedTime(pathName);
+        std::map<std::string, std::string> reply = {{"lastModified", std::to_string(lastModified)}};
+        return reply;
     }
 
     void publishUpdates() {
