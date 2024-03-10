@@ -6,6 +6,7 @@
 #include <string>
 #include <sstream>
 #include <map>
+#include <sys/stat.h>
 
 namespace fs = std::filesystem;
 
@@ -197,9 +198,19 @@ public:
         std::cout << "File " << pathName << " content: " << buffer << std::endl;
         file.close();
 
+        // Add last modified time to response
+        struct stat st;
+        char* path = (char*)newPath.c_str();
+        if (stat(path, &st) == -1) {
+            std::cerr << "Error: Could not get last modified time." << std::endl;
+            response["responseCode"] = "400";
+            response["response"] = "Could not get last modified time.";
+            return response;
+        }
+        response["lastModified"] = std::to_string(st.st_mtime);
         response["responseCode"] = "200";
         std::string buffer_str(buffer);
-        response["response"] = "Result: " + buffer_str;
+        response["response"] = buffer_str;
         return response;
     }
 
@@ -303,6 +314,16 @@ public:
         return content;
     }
 
+    std::time_t getLastModifiedTime(const std::string& pathName) {
+        std::string newPath = serverPath + "/" + pathName;
+        struct stat st;
+        char* path = (char*)newPath.c_str();
+        if (stat(path, &st) == -1) {
+            std::cerr << "Error: Could not get last modified time." << std::endl;
+            return -1;
+        }
+        return st.st_mtime;
+    }
 
     private:
         std::string serverPath;
