@@ -8,6 +8,7 @@
 #include <string>
 #include "./utils.cpp"
 #include "./cachemanager.cpp"
+#include <chrono>
 class Client {
 public:
     Client(int serverPort, int clientPort) {
@@ -57,6 +58,7 @@ private:
     Message request;
     int requestId = 0;
     CacheManager* cache;
+    std::chrono::seconds timeout = std::chrono::seconds(5);
     
     char buffer[1024];
 
@@ -77,6 +79,47 @@ private:
             if (response.bodyAttributes.attributes["response"] == "Subscription terminated!") {
                 std::cout << "Unsubscribing...\n";
                 break;
+            }
+        }
+    }
+
+    void handleView() {
+        // std::map<std::string, std::string> requestBody;
+        // requestBody["operation"] = "view";
+        // sendRequest(requestBody);
+        // ssize_t bytesReceived = receiveResponse();
+        // Message _ = unmarshalResponse(bytesReceived);
+
+        std::map<std::string, std::string> requestBody;
+        requestBody["operation"] = "view";
+        
+        while (true) {
+            // Send request to server
+            sendRequest(requestBody);
+            
+            // Start timer
+            auto start = std::chrono::steady_clock::now();
+            
+            // Receive response
+            ssize_t bytesReceived = receiveResponse();
+            
+            // Stop timer
+            auto end = std::chrono::steady_clock::now();
+            auto elapsedTime = std::chrono::duration_cast<std::chrono::seconds>(end - start);
+            
+            // Check if response received within timeout duration
+            if (bytesReceived >= 0) {
+                // Response received
+                Message _ = unmarshalResponse(bytesReceived);
+                break; // Exit the loop
+            } else {
+                // No response received within timeout duration
+                std::cout << "No response received within timeout." << std::endl;
+                
+                // Check if timeout occurred
+                if (elapsedTime >= timeout) {
+                    std::cout << "Timeout occurred. Resending request." << std::endl;
+                }
             }
         }
     }
@@ -254,14 +297,6 @@ private:
         clientSocket->send(marshalledData.data(), marshalledData.size(), 0, (sockaddr*)&serverAddr, sizeof(serverAddr));
     }
 
-    void handleView() {
-        std::map<std::string, std::string> requestBody;
-        requestBody["operation"] = "view";
-        sendRequest(requestBody);
-        ssize_t bytesReceived = receiveResponse();
-        Message _ = unmarshalResponse(bytesReceived);
-    }
-
     ssize_t receiveResponse() {
         ssize_t bytesReceived = clientSocket->recv(buffer, sizeof(buffer), 0, (sockaddr*)&serverAddr, &serverAddrSize);
         if (bytesReceived == -1) {
@@ -275,9 +310,6 @@ private:
         // Unmarshal response
         Message response;
         response.unmarshal(std::vector<uint8_t>(buffer, buffer + bytesReceived));
-        
-        std::cout << "responseId: " << response.requestId << std::endl;
-
 
         // if successful, print result
         if (response.bodyAttributes.attributes["responseCode"] == "200") {
@@ -311,13 +343,9 @@ private:
                     << "subscribe - Subscribe to updates for a file\n"
                     << "===========================================\n"
                     << "\n";
-
-
-            return;
         }
         else if (strcmp(input, "subscribe") == 0){
             handleSubscribe();
-            return;
         }
         else if (strcmp(input, "create") == 0) {
             handleCreateFile();
@@ -343,7 +371,8 @@ private:
         else if (strcmp(input, "view") == 0) {
             handleView();
         }
-        else std::cout << "Invalid command. Type 'help' for a list of commands\n";   
+        else std::cout << "Invalid command. Type 'help' for a list of commands\n";  
+        return; 
     }
 
     // This gets the last modified time of a file from the server to determine whether a new copy is needed

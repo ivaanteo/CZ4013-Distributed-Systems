@@ -99,7 +99,6 @@ private:
     FileManager* fileManager;
     int invocationType;
     // map to store requests (clientAddress, clientPort, receivedData) and their corresponding responses
-    // std::unordered_map<std::pair<std::string, std::string>, 
     std::unordered_map<std::pair<std::string, std::string>, std::unordered_map<std::vector<uint8_t>, std::vector<uint8_t>>> requestResponseMap;
 
     char buffer[1024];
@@ -124,7 +123,6 @@ private:
         // record request and response in map
         std::pair<std::string, std::string> clientAddress = std::make_pair(inet_ntoa(clientAddr.sin_addr), std::to_string(ntohs(clientAddr.sin_port)));
         requestResponseMap[clientAddress][receivedData] = marshalledData;
-        
         serverSocket->send(marshalledData.data(), marshalledData.size(), 0, (sockaddr*)&clientAddr, sizeof(clientAddr));
     }
 
