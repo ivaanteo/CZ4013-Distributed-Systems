@@ -9,6 +9,7 @@
 #include "./utils.cpp"
 #include "./cachemanager.cpp"
 #include <chrono>
+#include <fcntl.h> 
 class Client {
 public:
     Client(int serverPort, int clientPort) {
@@ -93,34 +94,59 @@ private:
         std::map<std::string, std::string> requestBody;
         requestBody["operation"] = "view";
         
-        while (true) {
-            // Send request to server
-            sendRequest(requestBody);
+        // while (true) {
+        //     // Send request to server
+        //     sendRequest(requestBody);
             
+        //     // Start timer
+        //     auto start = std::chrono::steady_clock::now();
+            
+        //     // Receive response
+        //     ssize_t bytesReceived = receiveResponse();
+            
+        //     // Stop timer
+        //     auto end = std::chrono::steady_clock::now();
+        //     auto elapsedTime = std::chrono::duration_cast<std::chrono::seconds>(end - start);
+            
+        //     // Check if response received within timeout duration
+        //     if (bytesReceived >= 0) {
+        //         // Response received
+        //         Message _ = unmarshalResponse(bytesReceived);
+        //         break; // Exit the loop
+        //     } else {
+        //         // No response received within timeout duration
+        //         std::cout << "No response received within timeout." << std::endl;
+                
+        //         // Check if timeout occurred
+        //         if (elapsedTime >= timeout) {
+        //             std::cout << "Timeout occurred. Resending request." << std::endl;
+        //         }
+        //     }
+        // }
+
+        for (int i = 0; i < 3; i++) {
+            std::cout << "Sending request " << i << std::endl;
+            sendRequest(requestBody);
+
             // Start timer
             auto start = std::chrono::steady_clock::now();
-            
-            // Receive response
-            ssize_t bytesReceived = receiveResponse();
-            
-            // Stop timer
             auto end = std::chrono::steady_clock::now();
             auto elapsedTime = std::chrono::duration_cast<std::chrono::seconds>(end - start);
-            
-            // Check if response received within timeout duration
-            if (bytesReceived >= 0) {
-                // Response received
-                Message _ = unmarshalResponse(bytesReceived);
-                break; // Exit the loop
-            } else {
-                // No response received within timeout duration
-                std::cout << "No response received within timeout." << std::endl;
-                
-                // Check if timeout occurred
-                if (elapsedTime >= timeout) {
-                    std::cout << "Timeout occurred. Resending request." << std::endl;
+
+            while (elapsedTime < timeout) {
+                ssize_t bytesReceived = receiveResponse();
+
+                if (bytesReceived >= 0) {
+                    Message _ = unmarshalResponse(bytesReceived);
+                    return;
                 }
+                end = std::chrono::steady_clock::now();
+                elapsedTime = std::chrono::duration_cast<std::chrono::seconds>(end - start);
+                // print elapsedTime
+                std::cout << "Elapsed time: " << elapsedTime.count() << std::endl;
             }
+            std::cout << "No response received within timeout." << std::endl;
+
         }
     }
 
@@ -298,11 +324,14 @@ private:
     }
 
     ssize_t receiveResponse() {
-        ssize_t bytesReceived = clientSocket->recv(buffer, sizeof(buffer), 0, (sockaddr*)&serverAddr, &serverAddrSize);
-        if (bytesReceived == -1) {
-            perror("Error: Could not receive data from server\n");
-            return -1;
-        }
+        std::cout << "Waiting for response...\n";
+        int flags = fcntl(clientSocket->getSocket(), F_GETFL, 0);
+        fcntl(clientSocket->getSocket(), F_SETFL, flags | O_NONBLOCK);
+        ssize_t bytesReceived = clientSocket->recv(buffer, sizeof(buffer), flags, (sockaddr*)&serverAddr, &serverAddrSize);
+        // if (bytesReceived == -1) {
+        //     perror("Error: Could not receive data from server\n");
+        //     return -1;
+        // }
         return bytesReceived;
     }
 

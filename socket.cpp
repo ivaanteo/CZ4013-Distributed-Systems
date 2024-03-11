@@ -18,6 +18,10 @@ public:
         }
     }
 
+    int getSocket() {
+        return m_socket;
+    }
+
     Socket(int socketDescriptor) { 
         m_socket = socketDescriptor;
     }
@@ -58,10 +62,10 @@ public:
 
     ssize_t recv(void* buffer, size_t length, int flags, sockaddr* srcAddr, socklen_t* srcAddrLen) {
         ssize_t bytesReceived = recvfrom(m_socket, buffer, length, flags, srcAddr, srcAddrLen);
-        if (bytesReceived == -1) {
-            perror("Error: Could not receive data\n");
-            throw std::runtime_error("Receive error");
-        }
+        // if (bytesReceived == -1) {
+        //     perror("Error: Could not receive data\n");
+        //     throw std::runtime_error("Receive error");
+        // }
         return bytesReceived;
     }
     
