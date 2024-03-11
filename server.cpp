@@ -330,15 +330,15 @@ private:
         AttributeMap reply;
         reply["response"] = message;
         reply["responseCode"] = "200";
-        return reply;
         std::cout << "Sent to client: " << message << std::endl;
 
-
-        // Send unsubscription message to client on timestamp
         std::thread unsubscribeThread([this, pathName, timestamp, ipAddress, port] {
             // Copy ip address and port
             std::string ipAddressCopy = ipAddress;
             int portCopy = port;
+            
+            std::cout << "Sleeping for " << std::stoi(timestamp) - time(0) << " seconds..." << std::endl;
+
             std::this_thread::sleep_for(std::chrono::seconds(std::stoi(timestamp) - time(0)));
             std::cout << "Unsubscribing..." << std::endl;
             // Send message to client
@@ -346,8 +346,6 @@ private:
             AttributeMap reply;
             reply["response"] = message;
             reply["responseCode"] = "200";
-            // Send timestamp of 1 second ago
-            // reply["timestamp"] = std::to_string(time(0) - 1);
 
             // Send to
             sendTo(reply, getClientAddrFromIPAndPort(ipAddressCopy, portCopy));
@@ -358,6 +356,9 @@ private:
         });
 
         unsubscribeThread.detach();
+
+
+        return reply;
     }
 
     std::map<std::string, std::string> handleLastModified(std::map<std::string, std::string> attributes) {
@@ -389,7 +390,6 @@ private:
                 // Send to
                 sendTo(reply, getClientAddrFromIPAndPort(ipAddress, port));
                 std::cout << "Sent to client: " << message << std::endl;
-
             }
         }
     }

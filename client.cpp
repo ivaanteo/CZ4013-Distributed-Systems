@@ -59,7 +59,7 @@ private:
     Message request;
     int requestId = 0;
     CacheManager* cache;
-    std::chrono::seconds timeout = std::chrono::seconds(5);
+    // std::chrono::seconds timeout = std::chrono::seconds(5);
     
     char buffer[1024];
 
@@ -73,9 +73,11 @@ private:
     void listenForUpdates(Message response) {
         int bytesReceived;
         while (response.bodyAttributes.attributes["responseCode"] == "200") {
-            bytesReceived = receiveResponse();
+            // Listen indefinitely
+            // std::chrono::seconds timeout = std::chrono::seconds((std::stoi(response.bodyAttributes.attributes["timestamp"]) - time(0)) * 3);
+            bytesReceived = receiveResponse(std::chrono::seconds(100));
             response = unmarshalResponse(bytesReceived);
-            
+
             // If subscription terminated, break
             if (response.bodyAttributes.attributes["response"] == "Subscription terminated!") {
                 std::cout << "Unsubscribing...\n";
@@ -92,23 +94,8 @@ private:
             std::cout << "Sending request " << i << std::endl;
             sendRequest(requestBody);
 
-            // Start timer
-            auto start = std::chrono::steady_clock::now();
-            auto end = std::chrono::steady_clock::now();
-            auto elapsedTime = std::chrono::duration_cast<std::chrono::seconds>(end - start);
-
-            while (elapsedTime < timeout) {
-                ssize_t bytesReceived = receiveResponse();
-
-                if (bytesReceived >= 0) {
-                    Message _ = unmarshalResponse(bytesReceived);
-                    return;
-                }
-                end = std::chrono::steady_clock::now();
-                elapsedTime = std::chrono::duration_cast<std::chrono::seconds>(end - start);
-            }
-            std::cout << "No response received within timeout." << std::endl;
-
+            ssize_t bytesReceived = receiveResponse();
+            Message response = unmarshalResponse(bytesReceived);
         }
     }
 
@@ -127,6 +114,7 @@ private:
         requestBody["pathName"] = pathName;
         requestBody["timestamp"] = timestamp;
         sendRequest(requestBody);
+        
         // Repeatedly receive updates from server
         ssize_t bytesReceived = receiveResponse();
         Message response = unmarshalResponse(bytesReceived);
@@ -285,18 +273,40 @@ private:
         clientSocket->send(marshalledData.data(), marshalledData.size(), 0, (sockaddr*)&serverAddr, sizeof(serverAddr));
     }
 
-    ssize_t receiveResponse() {
+    ssize_t receiveResponse(std::chrono::seconds timeout = std::chrono::seconds(5)) {
+
+        // Start timer
+        auto start = std::chrono::steady_clock::now();
+        auto end = std::chrono::steady_clock::now();
+        auto elapsedTime = std::chrono::duration_cast<std::chrono::seconds>(end - start);
+
+        // Set flags
         int flags = fcntl(clientSocket->getSocket(), F_GETFL, 0);
         fcntl(clientSocket->getSocket(), F_SETFL, flags | O_NONBLOCK);
-        ssize_t bytesReceived = clientSocket->recv(buffer, sizeof(buffer), flags, (sockaddr*)&serverAddr, &serverAddrSize);
-        // if (bytesReceived == -1) {
-        //     perror("Error: Could not receive data from server\n");
-        //     return -1;
-        // }
-        return bytesReceived;
+
+        ssize_t bytesReceived = -1;
+        while (elapsedTime < timeout) {
+
+            bytesReceived = clientSocket->recv(&buffer, sizeof(buffer), MSG_DONTWAIT, (sockaddr*)&serverAddr, &serverAddrSize);
+
+            if (bytesReceived >= 0) {
+                std::cout << "Response received!" << std::endl;
+                return bytesReceived;
+            }
+
+            end = std::chrono::steady_clock::now();
+            elapsedTime = std::chrono::duration_cast<std::chrono::seconds>(end - start);
+        }
+        
+        std::cout << "No response received within timeout." << std::endl;
+        return bytesReceived; // Fail
     }
 
     Message unmarshalResponse(ssize_t bytesReceived) {
+        if (bytesReceived < 0) {
+            std::cerr << "Error: Could not receive data\n";
+            return Message();
+        }
         // Unmarshal response
         Message response;
         response.unmarshal(std::vector<uint8_t>(buffer, buffer + bytesReceived));
