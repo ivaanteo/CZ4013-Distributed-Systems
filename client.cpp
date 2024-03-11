@@ -86,17 +86,26 @@ private:
         }
     }
 
-    void handleView() {
-        std::map<std::string, std::string> requestBody;
-        requestBody["operation"] = "view";
-
+    Message sendMultipleRequests(std::map<std::string, std::string> requestBody) {
         for (int i = 0; i < maxTries; i++) {
             std::cout << "Sending request " << i << std::endl;
             sendRequest(requestBody);
 
             ssize_t bytesReceived = receiveResponse();
             Message response = unmarshalResponse(bytesReceived);
+            // if response received is not an empty Message() object, return response and break
+            if (response.bodyAttributes.attributes["responseCode"] == "200" || response.bodyAttributes.attributes["responseCode"] == "400") {
+                return response;
+                break;
+            }
         }
+        return Message(); // Fail
+    }
+
+    void handleView() {
+        std::map<std::string, std::string> requestBody;
+        requestBody["operation"] = "view";
+        Message _ = sendMultipleRequests(requestBody);
     }
 
     void handleSubscribe() {
@@ -113,11 +122,7 @@ private:
         requestBody["operation"] = "subscribe";
         requestBody["pathName"] = pathName;
         requestBody["timestamp"] = timestamp;
-        sendRequest(requestBody);
-        
-        // Repeatedly receive updates from server
-        ssize_t bytesReceived = receiveResponse();
-        Message response = unmarshalResponse(bytesReceived);
+        Message response = sendMultipleRequests(requestBody);
 
         if (response.bodyAttributes.attributes["responseCode"] == "200") {
             // If successful, listen until timestamp
@@ -136,9 +141,7 @@ private:
         std::map<std::string, std::string> requestBody;
         requestBody["operation"] = "create";
         requestBody["pathName"] = pathName;
-        sendRequest(requestBody);
-        ssize_t bytesReceived = receiveResponse();
-        Message _ = unmarshalResponse(bytesReceived);
+        Message _ = sendMultipleRequests(requestBody);
     }
 
     void handleDeleteFile() {
@@ -147,9 +150,7 @@ private:
         std::map<std::string, std::string> requestBody;
         requestBody["operation"] = "delete";
         requestBody["pathName"] = pathName;
-        sendRequest(requestBody);
-        ssize_t bytesReceived = receiveResponse();
-        Message _ = unmarshalResponse(bytesReceived);
+        Message _ = sendMultipleRequests(requestBody);
     }
 
     void handleReadFile() {
@@ -191,9 +192,7 @@ private:
         requestBody["pathName"] = pathName;
         requestBody["offset"] = offset;
         requestBody["length"] = length;
-        sendRequest(requestBody);
-        ssize_t bytesReceived = receiveResponse();
-        Message response = unmarshalResponse(bytesReceived);
+        Message response = sendMultipleRequests(requestBody);
         
         std::time_t lastModified = response.bodyAttributes.attributes["lastModified"] == "" ? getLastModified(pathName) : std::stoi(response.bodyAttributes.attributes["lastModified"]);
 
@@ -221,9 +220,7 @@ private:
         requestBody["pathName"] = pathName;
         requestBody["offset"] = offset;
         requestBody["content"] = content;
-        sendRequest(requestBody);
-        ssize_t bytesReceived = receiveResponse();
-        Message _ = unmarshalResponse(bytesReceived);
+        Message _ = sendMultipleRequests(requestBody);
         // For now, we'll invalidate the cache
         cache->invalidate(pathName);
     }
@@ -237,9 +234,7 @@ private:
         requestBody["operation"] = "duplicate";
         requestBody["pathName"] = pathName;
         requestBody["newPathName"] = newPathName;
-        sendRequest(requestBody);
-        ssize_t bytesReceived = receiveResponse();
-        Message _ = unmarshalResponse(bytesReceived);
+        Message _ = sendMultipleRequests(requestBody);
     }
 
     void handleCreateDir() {
@@ -248,9 +243,7 @@ private:
         std::map<std::string, std::string> requestBody;
         requestBody["operation"] = "createdir";
         requestBody["pathName"] = pathName;
-        sendRequest(requestBody);
-        ssize_t bytesReceived = receiveResponse();
-        Message _ = unmarshalResponse(bytesReceived);
+        Message _ = sendMultipleRequests(requestBody);
     }
 
     void handleDeleteDir() {
@@ -259,9 +252,7 @@ private:
         std::map<std::string, std::string> requestBody;
         requestBody["operation"] = "deletedir";
         requestBody["pathName"] = pathName;
-        sendRequest(requestBody);
-        ssize_t bytesReceived = receiveResponse();
-        Message _ = unmarshalResponse(bytesReceived);
+        Message _ = sendMultipleRequests(requestBody);
     }
 
     void sendRequest(std::map<std::string, std::string> body) {
