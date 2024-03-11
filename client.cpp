@@ -59,7 +59,7 @@ private:
     Message request;
     int requestId = 0;
     CacheManager* cache;
-    // std::chrono::seconds timeout = std::chrono::seconds(5);
+    int maxTries = 3;
     
     char buffer[1024];
 
@@ -90,7 +90,7 @@ private:
         std::map<std::string, std::string> requestBody;
         requestBody["operation"] = "view";
 
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < maxTries; i++) {
             std::cout << "Sending request " << i << std::endl;
             sendRequest(requestBody);
 
