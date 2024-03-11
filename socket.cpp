@@ -5,6 +5,13 @@
 #include <cstring>
 #include <vector>
 #include <arpa/inet.h>
+#include <chrono>
+#include <ctime>
+#include <algorithm>
+#include <random>
+#include <thread>
+#include <stdexcept>
+
 
 
 // Wrapper class for a socket
@@ -53,6 +60,16 @@ public:
     
     ssize_t send(const void* buffer, size_t length, int flags, const sockaddr* destAddr, socklen_t destAddrLen) {
         ssize_t bytesSent = sendto(m_socket, buffer, length, flags, destAddr, destAddrLen);
+                // Simulate a loss in packets
+        if (shouldDrop()) {
+            std::cout << "Dropping packet" << std::endl;
+            return;
+        }
+
+        // Sleep for delay
+        int delay = getDelay() * 1000;
+        std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+
         if (bytesSent == -1) {
             perror("Error: Could not send data\n");
             throw std::runtime_error("Send error");
@@ -62,15 +79,29 @@ public:
 
     ssize_t recv(void* buffer, size_t length, int flags, sockaddr* srcAddr, socklen_t* srcAddrLen) {
         ssize_t bytesReceived = recvfrom(m_socket, buffer, length, flags, srcAddr, srcAddrLen);
-        // if (bytesReceived == -1) {
-        //     perror("Error: Could not receive data\n");
-        //     throw std::runtime_error("Receive error");
-        // }
         return bytesReceived;
     }
     
 private:
     int m_socket;
+
+    // Shitpuckery
+    static const int PACKET_LOSS_RATE = 10;
+    static const float DELAY_MEAN; // In seconds
+    static const float DELAY_VARIANCE;
+
+    // Simulating Network Loss
+    bool shouldDrop(int percent = PACKET_LOSS_RATE) {
+        return (rand() % 100) < percent;
+    }
+
+    // Choose delay from a binomial distribution
+    float getDelay(float mean = DELAY_MEAN, float variance = DELAY_VARIANCE) {
+        std::default_random_engine generator;
+        std::binomial_distribution<float> distribution(mean, variance);
+        float delay = distribution(generator);
+        return std::max(delay, 0.0f);
+    }
 
     // Connections
     std::vector<int> connections;

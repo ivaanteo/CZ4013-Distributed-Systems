@@ -90,7 +90,6 @@ private:
         for (int i = 0; i < maxTries; i++) {
             std::cout << "Sending request " << i << std::endl;
             sendRequest(requestBody);
-
             ssize_t bytesReceived = receiveResponse();
             Message response = unmarshalResponse(bytesReceived);
             // if response received is not an empty Message() object, return response and break

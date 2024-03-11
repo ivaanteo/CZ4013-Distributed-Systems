@@ -41,6 +41,11 @@ namespace std {
     };
 }
 
+// Constants
+const int PACKET_LOSS_RATE = 20;
+const float DELAY_MEAN = 0.1; // seconds
+const float DELAY_VARIANCE = 10; // seconds
+
 class Server {
 public:
     Server(int port, int invocationType) {
@@ -123,6 +128,7 @@ private:
         // record request and response in map
         std::pair<std::string, std::string> clientAddress = std::make_pair(inet_ntoa(clientAddr.sin_addr), std::to_string(ntohs(clientAddr.sin_port)));
         requestResponseMap[clientAddress][receivedData] = marshalledData;
+
         serverSocket->send(marshalledData.data(), marshalledData.size(), 0, (sockaddr*)&clientAddr, sizeof(clientAddr));
     }
 
@@ -407,7 +413,6 @@ private:
     }
     
 };
-
 
 int main(int argc, char* argv[]) {
     
