@@ -10,6 +10,13 @@
 #include "./cachemanager.cpp"
 #include <chrono>
 #include <fcntl.h> 
+#define RESET       "\033[0m"
+#define BOLD        "\033[1m"
+#define BLACK       "\033[30m"      /* Black */
+#define RED         "\033[31m"      /* Red */
+#define GREEN       "\033[32m"      /* Green */
+#define BLUE        "\033[34m"      /* Blue */
+
 class Client {
 public:
     Client(int serverPort, int clientPort) {
@@ -30,6 +37,7 @@ public:
         clientAddr.sin_port = htons(clientPort); // Set client port
 
         clientSocket->bind((sockaddr*)&clientAddr, sizeof(clientAddr));
+        
         std::cout << "Client running on port " << clientPort << std::endl;
 
         cache = new CacheManager();
@@ -66,7 +74,8 @@ private:
     // Client helper functions
 
     void getUserInput(std::string message, std::string& input) {
-        std::cout << message << std::endl;
+        std::cout << BOLD << message << RESET << std::endl;
+
         std::getline(std::cin, input);
     }
     
@@ -88,7 +97,7 @@ private:
 
     Message sendMultipleRequests(std::map<std::string, std::string> requestBody) {
         for (int i = 0; i < maxTries; i++) {
-            std::cout << "Sending request " << i << std::endl;
+            std::cout << "Sending request attempt " << i+1 << std::endl;
             sendRequest(requestBody);
             ssize_t bytesReceived = receiveResponse();
             Message response = unmarshalResponse(bytesReceived);
@@ -172,20 +181,17 @@ private:
         std::cout << "Checking cache...\n";
         int start = std::stoi(offset);
         int end = start + std::stoi(length);
-        std::cout << "Start: " << start << " End: " << end << std::endl;
-
 
         // Check whether the range is in the cache
         if (cache->isRangeCached(pathName, start, end)) {
-            std::cout << "In range!\n";
             if (cache->isLastValidatedFresh(pathName, start, end)) {
-                std::cout << "Cache last validated is fresh!\n";
+                std::cout << "Cache last validated is fresh! Returning cached result...\n";
                 std::cout << cache->get(pathName, start, end) << std::endl;
                 return;
             }
             // Check whether lastModified of local copy is equivalent to server copy
             else if (cache->isLastModifiedFresh(pathName, start, end, getLastModified(pathName))) {
-                std::cout << "Cache last modified is fresh!\n";
+                std::cout << "Cache last modified is fresh! Returning cached result...\n";
                 std::cout << cache->get(pathName, start, end) << std::endl;
                 return;
             }
@@ -211,8 +217,6 @@ private:
             cache->insert(pathName, response.bodyAttributes.attributes["response"], start, end, lastModified);
             std::cout << response.bodyAttributes.attributes["response"] << std::endl;
             std::cout << "Cache updated!\n";
-            // Print contents of cache
-            cache->print();
         }
     }
 
@@ -303,7 +307,7 @@ private:
 
     Message unmarshalResponse(ssize_t bytesReceived) {
         if (bytesReceived < 0) {
-            std::cerr << "Error: Could not receive data\n";
+            std::cerr << RED << BOLD << "Error: Could not receive data\n" << RESET;
             return Message();
         }
         // Unmarshal response
@@ -312,11 +316,11 @@ private:
 
         // if successful, print result
         if (response.bodyAttributes.attributes["responseCode"] == "200") {
-            std::cout << "Success! " << response.bodyAttributes.attributes["response"]  << std::endl;
+            std::cout << GREEN << BOLD << "Success! " << response.bodyAttributes.attributes["response"] << RESET << std::endl;
             return response;
         }
         else {
-            std::cerr << "Error: " << response.bodyAttributes.attributes["response"]  << std::endl;
+            std::cerr << RED << BOLD << "Error: " << response.bodyAttributes.attributes["response"]  << RESET << std::endl;
             return response;
         }
     }
@@ -327,7 +331,8 @@ private:
             exit(0);
         }
         else if (strcmp(input, "help") == 0){
-            std::cout << "===========================================\n" 
+
+            std::cout << BOLD << BLUE << "===========================================\n" 
                     << "Commands:\n"
                     << "view - View structure of main directory and files\n"
                     << "createdir - Create a new directory\n"
@@ -341,6 +346,7 @@ private:
                     << "exit - Exit the program\n"
                     << "subscribe - Subscribe to updates for a file\n"
                     << "===========================================\n"
+                    << RESET
                     << "\n";
         }
         else if (strcmp(input, "subscribe") == 0){

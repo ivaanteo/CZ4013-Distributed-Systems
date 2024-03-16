@@ -24,10 +24,9 @@ struct CacheEntry {
 class CacheManager {
 public:
     void insert(const std::string& key, const std::string& value, int start, int end, std::time_t lastModified) {
-        std::cout << "Insert with key: " << key << " value: " << value << " start: " << start << " end: " << end << " lastModified: " << lastModified << std::endl;
         // If the key doesn't exist, we insert it
         if (cache.find(key) == cache.end()) {
-            std::cout << "Inserting new key" << std::endl;
+            std::cout << "CacheManager: Inserting into cache..." << std::endl;
             cache[key].lastValidated = std::time(nullptr);
             cache[key].lastModified = lastModified;
             cache[key].ranges.push_back({value, start, end});
@@ -37,7 +36,7 @@ public:
         // If it is, we update the cache
         // If it's not, we remove the entry and insert the new one
         if (cache[key].lastModified != lastModified) {
-            std::cout << "Removing old key" << std::endl;
+            std::cout << "CacheManager: Removing old key..." << std::endl;
             cache[key].lastValidated = std::time(nullptr);
             cache[key].lastModified = lastModified;
             cache[key].ranges.clear();
@@ -48,19 +47,19 @@ public:
         // If the last modified is the same, we merge overlapping ranges
         // If the range is not overlapping, we insert the new range
         if (cache[key].ranges.empty()) {
-            std::cout << "Inserting new range" << std::endl;
+            std::cout << "CacheManager: Inserting new range into cache" << std::endl;
             cache[key].lastValidated = std::time(nullptr);
             cache[key].ranges.push_back({value, start, end});
             return;
         }
         if (start > cache[key].ranges.back().end) {
-            std::cout << "Inserting at the back" << std::endl;
+            std::cout << "CacheManager: Inserting at the back" << std::endl;
             cache[key].lastValidated = std::time(nullptr);
             cache[key].ranges.push_back({value, start, end});
             return;
         }
         if (end < cache[key].ranges.front().start) {
-            std::cout << "Inserting at the front" << std::endl;
+            std::cout << "CacheManager: Inserting at the front" << std::endl;
             cache[key].lastValidated = std::time(nullptr);
             cache[key].ranges.insert(cache[key].ranges.begin(), {value, start, end});
             return;
@@ -74,16 +73,11 @@ public:
         std::sort(cache[key].ranges.begin(), cache[key].ranges.end(), [](const CacheRange& a, const CacheRange& b) {
             return a.start < b.start;
         });
-
-        std::cout << "Sorted ranges" << std::endl;
         
         // Merge overlapping ranges
         int i = 0;
         while (i < cache[key].ranges.size() - 1) {
             if (cache[key].ranges[i].end >= cache[key].ranges[i + 1].start) {
-                
-                std::cout << "Before merging" << std::endl;
-                print();
                 // Check if partially overlapping
                 if (cache[key].ranges[i].end < cache[key].ranges[i + 1].end and cache[key].ranges[i].end >= cache[key].ranges[i + 1].start) {
                     cache[key].ranges[i].data += cache[key].ranges[i + 1].data.substr(cache[key].ranges[i].end - cache[key].ranges[i + 1].start, cache[key].ranges[i + 1].end - cache[key].ranges[i].end + 1);
@@ -91,9 +85,6 @@ public:
                 cache[key].ranges.erase(cache[key].ranges.begin() + i + 1);
                 
                 cache[key].ranges[i].end = std::max(cache[key].ranges[i].end, cache[key].ranges[i + 1].end);
-                // Merged ranges
-                std::cout << "After merging" << std::endl;
-                print();
                 
             } else {
                 i++;
