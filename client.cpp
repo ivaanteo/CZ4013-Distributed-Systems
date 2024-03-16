@@ -160,6 +160,15 @@ private:
         std::string length;
         getUserInput("Enter the length which you would like to read: ", length);
 
+        // Check if file exists on server
+        std::map<std::string, std::string> requestBody;
+        requestBody["operation"] = "fileExists";
+        requestBody["pathName"] = pathName;
+        Message exists = sendMultipleRequests(requestBody);
+        if (exists.bodyAttributes.attributes["responseCode"] == "400") {
+            return;
+        }
+
         std::cout << "Checking cache...\n";
         int start = std::stoi(offset);
         int end = start + std::stoi(length);
@@ -186,7 +195,7 @@ private:
         std::cout << "Cache miss!\n";
         
         // Refetch entire range
-        std::map<std::string, std::string> requestBody;
+        requestBody.clear(); 
         requestBody["operation"] = "read";
         requestBody["pathName"] = pathName;
         requestBody["offset"] = offset;

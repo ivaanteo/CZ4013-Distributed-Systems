@@ -63,7 +63,7 @@ public:
                 // Simulate a loss in packets
         if (shouldDrop()) {
             std::cout << "Dropping packet" << std::endl;
-            return;
+            return -1;
         }
 
         // Sleep for delay
@@ -87,8 +87,8 @@ private:
 
     // Shitpuckery
     static const int PACKET_LOSS_RATE = 10;
-    static const float DELAY_MEAN; // In seconds
-    static const float DELAY_VARIANCE;
+    constexpr static const float DELAY_MEAN = 1.0f; // In seconds
+    constexpr static const float DELAY_VARIANCE = 0.1f;
 
     // Simulating Network Loss
     bool shouldDrop(int percent = PACKET_LOSS_RATE) {
@@ -98,7 +98,7 @@ private:
     // Choose delay from a binomial distribution
     float getDelay(float mean = DELAY_MEAN, float variance = DELAY_VARIANCE) {
         std::default_random_engine generator;
-        std::binomial_distribution<float> distribution(mean, variance);
+        std::normal_distribution<float> distribution(mean, variance);
         float delay = distribution(generator);
         return std::max(delay, 0.0f);
     }

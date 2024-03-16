@@ -224,6 +224,8 @@ private:
             reply = handleView(attributes);
         } else if (operation == "lastModified") {
             reply = handleLastModified(attributes);
+        } else if (operation == "fileExists") {
+            reply = handleFileExists(attributes);
         }
         else {
             handleEcho(receivedRequest, requestID, receivedData);
@@ -371,6 +373,19 @@ private:
         std::string pathName = attributes["pathName"];
         std::time_t lastModified = fileManager->getLastModifiedTime(pathName);
         std::map<std::string, std::string> reply = {{"lastModified", std::to_string(lastModified)}};
+        return reply;
+    }
+
+    std::map<std::string, std::string> handleFileExists(std::map<std::string, std::string> attributes) {
+        std::string pathName = attributes["pathName"];
+        // set reply with a response code 200 if file exists, 400 if it does not
+        std::map<std::string, std::string> reply;
+        if (fileManager->fileExists(pathName)) {
+            reply["responseCode"] = "200";
+        } else {
+            reply["responseCode"] = "400";
+            reply["response"] = "File does not exist";
+        }
         return reply;
     }
 
