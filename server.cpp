@@ -41,11 +41,6 @@ namespace std {
     };
 }
 
-// Constants
-const int PACKET_LOSS_RATE = 20;
-const float DELAY_MEAN = 0.1; // seconds
-const float DELAY_VARIANCE = 10; // seconds
-
 class Server {
 public:
     Server(int port, int invocationType) {
@@ -96,11 +91,9 @@ public:
 
 private:
     Socket* serverSocket;
-    Socket* clientSocket;
     sockaddr_in serverAddr;
     sockaddr_in clientAddr;
     socklen_t clientAddrSize;
-    int clientSocketDescriptor;
     FileManager* fileManager;
     int invocationType;
     // map to store requests (clientAddress, clientPort, receivedData) and their corresponding responses
