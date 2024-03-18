@@ -169,11 +169,12 @@ private:
 
         // Print IP
         std::string clientIP = getIPAddress(clientAddr);
-        std::cout << "Client IP: " << clientIP << std::endl;
 
         // Print port
         int clientPort = getPort(clientAddr);
-        std::cout << "Client port: " << clientPort << std::endl;
+
+        std::cout << std::endl;
+        std::cout << "Received request from " << clientIP << ":" << clientPort << std::endl;
 
         // if invocation type == 1, check if request has been received before. if it has been received before, retransmit reply
         if (invocationType == 1) {
