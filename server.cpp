@@ -371,7 +371,11 @@ private:
     std::map<std::string, std::string> handleLastModified(std::map<std::string, std::string> attributes) {
         std::string pathName = attributes["pathName"];
         std::time_t lastModified = fileManager->getLastModifiedTime(pathName);
-        std::map<std::string, std::string> reply = {{"lastModified", std::to_string(lastModified)}};
+        std::map<std::string, std::string> reply = {
+            {"responseCode", "200"},
+            {"response", "Last modified time retrieved"},
+            {"lastModified", std::to_string(lastModified)}
+        };
         return reply;
     }
 
