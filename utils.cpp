@@ -94,6 +94,15 @@ struct Message {
         bodyAttributes.unmarshal(bodyData);
     }
 
+    std::string toString() {
+        std::string result = "Message Type: " + std::to_string(messageType) + "\n";
+        result += "Request ID: " + std::to_string(requestId) + "\n";
+        for (const auto& pair : bodyAttributes.attributes) {
+            result += pair.first + ": " + pair.second + "\n";
+        }
+        return result;
+    }
+
     void setVariables(int messageType, int requestId, const std::map<std::string, std::string>& attributes) {
         this->messageType = messageType;
         this->requestId = requestId;

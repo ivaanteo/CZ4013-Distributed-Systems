@@ -60,16 +60,16 @@ public:
     
     ssize_t send(const void* buffer, size_t length, int flags, const sockaddr* destAddr, socklen_t destAddrLen) {
         // Simulate a loss in packets
-        if (shouldDrop()) {
-            std::cout << "Dropping packet" << std::endl;
-            return -1;
-        }
+        // if (shouldDrop()) {
+        //     std::cout << "Dropping packet" << std::endl;
+        //     return -1;
+        // }
         
         ssize_t bytesSent = sendto(m_socket, buffer, length, flags, destAddr, destAddrLen);
 
         // Sleep for delay
-        int delay = getDelay() * 1000;
-        std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+        // int delay = getDelay() * 1000;
+        // std::this_thread::sleep_for(std::chrono::milliseconds(delay));
 
         if (bytesSent == -1) {
             perror("Error: Could not send data\n");

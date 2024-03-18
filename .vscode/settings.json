@@ -85,6 +85,7 @@
         "fstream": "cpp",
         "filesystem": "cpp",
         "__tree": "cpp",
-        "map": "cpp"
+        "map": "cpp",
+        "execution": "cpp"
     }
 }

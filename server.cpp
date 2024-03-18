@@ -28,17 +28,6 @@ namespace std {
             seed ^= std::hash<T>{}(val) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
         }
     };
-
-    template<>
-    struct hash<std::vector<uint8_t>> {
-        size_t operator()(const std::vector<uint8_t>& vec) const {
-            size_t hash = 0;
-            for (uint8_t elem : vec) {
-                hash ^= std::hash<uint8_t>{}(elem) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-            }
-            return hash;
-        }
-    };
 }
 
 class Server {
@@ -97,7 +86,7 @@ private:
     FileManager* fileManager;
     int invocationType;
     // map to store requests (clientAddress, clientPort, receivedData) and their corresponding responses
-    std::unordered_map<std::pair<std::string, std::string>, std::unordered_map<std::vector<uint8_t>, std::vector<uint8_t>>> requestResponseMap;
+    std::unordered_map<std::pair<std::string, std::string>, std::unordered_map<std::string, std::vector<uint8_t>>> requestResponseMap;
 
     char buffer[1024];
     // Subscriptions -- Filename : [Pair(timestamp, IP Address:Port), ...]
@@ -114,7 +103,7 @@ private:
         return receivedRequest;
     }
 
-    void sendReply(std::map<std::string, std::string> body, int requestId, std::vector<uint8_t> receivedData) {
+    void sendReply(std::map<std::string, std::string> body, int requestId, std::string receivedData) {
         Message reply;
         reply.setVariables(1, requestId, body);
         std::vector<uint8_t> marshalledData = reply.marshal();
@@ -162,8 +151,9 @@ private:
     void handleRequest(int bytesReceived) {
 
         // Receive data from client
-        std::vector<uint8_t> receivedData(buffer, buffer + bytesReceived);        
+        std::vector<uint8_t> receivedData(buffer, buffer + bytesReceived);     
         Message receivedRequest = receiveAndUnmarshallRequest(receivedData);
+        std::string key = receivedRequest.toString();
         int requestID = receivedRequest.requestId;
         std::map<std::string, std::string> attributes = receivedRequest.bodyAttributes.attributes;
 
@@ -178,11 +168,12 @@ private:
 
         // if invocation type == 1, check if request has been received before. if it has been received before, retransmit reply
         if (invocationType == 1) {
-            std::pair<std::string, std::string> clientAddress = std::make_pair(inet_ntoa(clientAddr.sin_addr), std::to_string(clientPort));
+            std::pair<std::string, std::string> clientAddress = std::make_pair(inet_ntoa(clientAddr.sin_addr), std::to_string(ntohs(clientAddr.sin_port)));
             if (requestResponseMap.find(clientAddress) != requestResponseMap.end()) {
-                if (requestResponseMap[clientAddress].find(receivedData) != requestResponseMap[clientAddress].end()) {
+
+                if (requestResponseMap[clientAddress].find(key) != requestResponseMap[clientAddress].end()) {
                     std::cout << "Retransmitting response" << std::endl;
-                    std::vector<uint8_t> pastResponse = requestResponseMap[clientAddress][receivedData];
+                    std::vector<uint8_t> pastResponse = requestResponseMap[clientAddress][key];
                     serverSocket->send(pastResponse.data(), pastResponse.size(), 0, (sockaddr*)&clientAddr, sizeof(clientAddr));
                     return;
                 }
@@ -222,14 +213,14 @@ private:
             reply = handleFileExists(attributes);
         }
         else {
-            handleEcho(receivedRequest, requestID, receivedData);
+            handleEcho(receivedRequest, requestID, key);
             return;
         }
-        sendReply(reply, requestID, receivedData);
+        sendReply(reply, requestID, key);
         return;
     }
 
-    void handleEcho(Message receivedRequest, int requestID, std::vector<uint8_t> receivedData) {
+    void handleEcho(Message receivedRequest, int requestID, std::string receivedData) {
         // Send data to client
         sendReply(receivedRequest.bodyAttributes.attributes, requestID, receivedData);
     }

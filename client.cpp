@@ -96,11 +96,17 @@ private:
     }
 
     Message sendMultipleRequests(std::map<std::string, std::string> requestBody) {
+        requestId++;
         for (int i = 0; i < maxTries; i++) {
             std::cout << "Sending request attempt " << i+1 << std::endl;
             sendRequest(requestBody);
             ssize_t bytesReceived = receiveResponse();
-            Message response = unmarshalResponse(bytesReceived);
+            Message response;
+            if (i == 0) {
+                response = unmarshalResponse(-1);
+            } else {
+                response = unmarshalResponse(bytesReceived);
+            }
             // if response received is not an empty Message() object, return response and break
             if (response.bodyAttributes.attributes["responseCode"] == "200" || response.bodyAttributes.attributes["responseCode"] == "400") {
                 return response;
@@ -271,7 +277,6 @@ private:
         body["port"] = std::to_string(clientPort);
         Message request;
         request.setVariables(0, requestId, body);
-        requestId++;
         std::vector<uint8_t> marshalledData = request.marshal();
         clientSocket->send(marshalledData.data(), marshalledData.size(), 0, (sockaddr*)&serverAddr, sizeof(serverAddr));
     }
