@@ -88,7 +88,7 @@ private:
             response = unmarshalResponse(bytesReceived);
 
             // If subscription terminated, break
-            if (response.bodyAttributes.attributes["response"] == "Subscription terminated!") {
+            if (response.bodyAttributes.attributes["response"].find("Subscription terminated!") != std::string::npos) {
                 std::cout << "Unsubscribing...\n";
                 break;
             }

@@ -42,6 +42,7 @@ public:
         serverAddr.sin_addr.s_addr = INADDR_ANY; // Accept connections on any IP address
         serverAddr.sin_port = htons(port); // Server port
         serverSocket->bind((sockaddr*)&serverAddr, sizeof(serverAddr));
+        // Print serverAddr
         
         // BUGFIX: We need this line to initialize the clientAddrSize variable, which is used in the recvfrom function
         clientAddrSize = sizeof(clientAddr);
@@ -340,7 +341,7 @@ private:
             std::this_thread::sleep_for(std::chrono::seconds(std::stoi(timestamp) - time(0)));
             std::cout << "Unsubscribing..." << std::endl;
             // Send message to client
-            const char* message = "Subscription terminated!"; // Simulate updated data
+            const char* message = "Subscription terminated! End of subscription duration."; // Simulate updated data
             AttributeMap reply;
             reply["response"] = message;
             reply["responseCode"] = "200";
@@ -391,16 +392,37 @@ private:
         for (auto& subscription : subscriptions) {
             std::string pathName = subscription.first;
             for (auto& client : subscription.second) {
-                
+                // Split IP address and port
+                std::string ipAddress = client.second.substr(0, client.second.find(":"));
+                int port = std::stoi(client.second.substr(client.second.find(":") + 1));
+
+                // Get timestamp
+                int timestamp = client.first;
+
+                // Check if the file doesn't exist
+                if (!fileManager->fileExists(pathName)) {
+                    std::cout << "Unsubscribing..." << std::endl;
+                    // Send message to client
+                    const char* message = "Subscription terminated! File was deleted by another client."; // Simulate updated data
+                    AttributeMap reply;
+                    reply["response"] = message;
+                    reply["responseCode"] = "200";
+
+                    // Send to
+                    sendTo(reply, getClientAddrFromIPAndPort(ipAddress, port));
+
+                    std::cout << "Sent to client: " << message << std::endl;
+                    // Remove subscription
+                    subscriptions[pathName].erase(std::remove(subscriptions[pathName].begin(), subscriptions[pathName].end(), std::make_pair(timestamp, ipAddress + ":" + std::to_string(port))), subscriptions[pathName].end());
+                    continue;
+                }
+
+
                 // Send message to client
                 std::string message = "Received new content: \n" + fileManager->getFileContents(pathName);
                 AttributeMap reply;
                 reply["response"] = &message[0];
                 reply["responseCode"] = "200";
-
-                // Split IP address and port
-                std::string ipAddress = client.second.substr(0, client.second.find(":"));
-                int port = std::stoi(client.second.substr(client.second.find(":") + 1));
 
                 // Send to
                 sendTo(reply, getClientAddrFromIPAndPort(ipAddress, port));
