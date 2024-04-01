@@ -313,7 +313,7 @@ private:
                 
                 AttributeMap reply;
                 reply["response"] = message;
-                reply["responseCode"] = "200";
+                reply["responseCode"] = "400";
                 std::cout << "Sent to client: " << message << std::endl;
                 return reply;
             }
