@@ -19,7 +19,7 @@
 
 class Client {
 public:
-    Client(int serverPort, int clientPort) {
+    Client(char* serverIP, int serverPort, int clientPort) {
         this->serverPort = serverPort;
         this->clientPort = clientPort;
 
@@ -28,7 +28,7 @@ public:
 
         // Create server address
         serverAddr.sin_family = AF_INET;
-        serverAddr.sin_addr.s_addr = INADDR_ANY; // Accept connections on any IP address
+        serverAddr.sin_addr.s_addr = inet_addr(serverIP); // Accept connections on any IP address
         serverAddr.sin_port = htons(serverPort); // Server port
 
         // Set client address and port
@@ -409,10 +409,11 @@ int main(int argc, char* argv[]) {
         exit(1);
     }
 
-    int serverPort = std::stoi(argv[1]);
-    int clientPort = std::stoi(argv[2]);
+    char* serverIP = argv[1];
+    int serverPort = std::stoi(argv[0]);
+    int clientPort = std::stoi(argv[1]);
     
-    Client client(serverPort, clientPort);
+    Client client(serverIP, serverPort, clientPort);
 
     client.run();
 
