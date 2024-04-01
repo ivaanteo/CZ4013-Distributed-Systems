@@ -404,14 +404,14 @@ private:
 };
 
 int main(int argc, char* argv[]) {
-    if (argc != 3) {
-        std::cerr << "Usage: " << argv[0] << " <serverPort>" << " <clientPort>\n";
+    if (argc != 4) {
+        std::cerr << "Usage: " << argv[0] << "<serverIP>" <<  "<serverPort>" << " <clientPort>\n";
         exit(1);
     }
 
     char* serverIP = argv[1];
-    int serverPort = std::stoi(argv[0]);
-    int clientPort = std::stoi(argv[1]);
+    int serverPort = std::stoi(argv[2]);
+    int clientPort = std::stoi(argv[3]);
     
     Client client(serverIP, serverPort, clientPort);
 
