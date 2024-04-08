@@ -56,7 +56,7 @@ public:
 
         fileManager = new FileManager(directoryPath);
         std::cout << "File Manager created" << std::endl;
-        fileManager->clearDirectory();
+        // fileManager->clearDirectory();
         fileManager->viewDirectory();
     }
     

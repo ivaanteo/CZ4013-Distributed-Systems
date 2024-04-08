@@ -130,7 +130,7 @@ public:
 
     bool isLastValidatedFresh(const std::string& key, int start, int end) {
         if (cache.find(key) != cache.end()) {
-            return std::time(nullptr) - cache[key].lastValidated < freshnessInterval;
+            return (std::time(nullptr) - cache[key].lastValidated) < freshnessInterval;
         }
         return false;
     }
