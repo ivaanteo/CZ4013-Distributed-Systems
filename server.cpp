@@ -130,7 +130,7 @@ private:
         return clientAddr;
     }
 
-    void sendTo(std::map<std::string, std::string> body, sockaddr_in clientAddr) { // TODO: track reply ID
+    void sendTo(std::map<std::string, std::string> body, sockaddr_in clientAddr) { 
         Message reply;
         reply.setVariables(1, 1, body);
         std::vector<uint8_t> marshalledData = reply.marshal();

@@ -102,14 +102,14 @@ private:
             sendRequest(requestBody);
             ssize_t bytesReceived = receiveResponse();
             Message response;
-            response = unmarshalResponse(bytesReceived);
+            // response = unmarshalResponse(bytesReceived);
 
             // uncomment to test timeout
-            // if (i == 0) {
-            //     response = unmarshalResponse(-1);
-            // } else {
-            //     response = unmarshalResponse(bytesReceived);
-            // }
+            if (i == 0) {
+                response = unmarshalResponse(-1);
+            } else {
+                response = unmarshalResponse(bytesReceived);
+            }
 
             // if response received is not an empty Message() object, return response and break
             if (response.bodyAttributes.attributes["responseCode"] == "200" || response.bodyAttributes.attributes["responseCode"] == "400") {

@@ -10,7 +10,7 @@
 
 namespace fs = std::filesystem;
 
-class FileManager { // TODO: error handling
+class FileManager {
 public:
     FileManager(const std::string& serverPath): serverPath(serverPath) {}
 
@@ -276,7 +276,9 @@ public:
     std::map<std::string, std::string> duplicateFile(const std::string& oldPath, const std::string& newPath) {
         std::map<std::string, std::string> response;
         std::string oldFilePath = serverPath + "/" + oldPath;
-        std::string newFilePath = serverPath + "/" + newPath;
+        int j = 0;
+        std::string newFilePath = serverPath + "/" + oldPath + std::to_string(j);
+
         if (!fs::exists(oldFilePath)) {
             std::cerr << "Error: File doesn't exist." << std::endl;
             response["responseCode"] = "400";
@@ -285,11 +287,12 @@ public:
         }
 
         // if new file already exists, return error
-        if (fs::exists(newFilePath)) {
-            std::cerr << "Error: New file already exists." << std::endl;
-            response["responseCode"] = "400";
-            response["response"] = "New file already exists.";
-            return response;
+        while (fs::exists(newFilePath)) {
+            // std::cerr << "Error: New file already exists." << std::endl;
+            // response["responseCode"] = "400";
+            // response["response"] = "New file already exists.";
+            j++;
+            newFilePath = serverPath + "/" + oldPath + std::to_string(j);
         }
 
         fs::copy_file(oldFilePath, newFilePath);
